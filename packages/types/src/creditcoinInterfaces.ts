@@ -146,6 +146,7 @@ export interface CreditcoinServiceInterface {
   }
   signer: {
     extraSignedExtension: (
+      specName: string,
       signerAddress: string,
       payloadOptions?: PayloadOptions
     ) => ExtraSignedExtension | undefined

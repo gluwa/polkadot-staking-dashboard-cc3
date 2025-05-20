@@ -2,16 +2,29 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { useExtensionAccounts, useExtensions } from '@w3ux/react-connect-kit'
+import type { HardwareAccount } from '@w3ux/types'
 import { DappName, ManualSigners } from 'consts'
+import { getNetworkData } from 'consts/util'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
 import { useBalances } from 'contexts/Balances'
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts'
 import { useLedgerHardware } from 'contexts/LedgerHardware'
+import { useNetwork } from 'contexts/Network'
+import { usePrompt } from 'contexts/Prompt'
 import { Notifications } from 'controllers/Notifications'
 import { TxSubmission } from 'controllers/TxSubmission'
+import { compactU32 } from 'dedot/shape'
 import type { InjectedSigner } from 'dedot/types'
+import { concatU8a, hexToU8a } from 'dedot/utils'
 import { useProxySupported } from 'hooks/useProxySupported'
+import { signLedgerPayload } from 'library/Signers/LedgerSigner'
+import { VaultSigner } from 'library/Signers/VaultSigner'
+import type {
+  VaultSignatureResult,
+  VaultSignStatus,
+} from 'library/Signers/VaultSigner/types'
+import { SignPrompt } from 'library/SubmitTx/ManualSign/Vault/SignPrompt'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { UseSubmitExtrinsic, UseSubmitExtrinsicProps } from './types'
@@ -26,13 +39,16 @@ export const useSubmitExtrinsic = ({
 }: UseSubmitExtrinsicProps): UseSubmitExtrinsic => {
   const { t } = useTranslation('app')
   const { serviceApi } = useApi()
+  const { network } = useNetwork()
   const { getAccountBalance } = useBalances()
   const { activeProxy } = useActiveAccounts()
   const { extensionsStatus } = useExtensions()
   const { isProxySupported } = useProxySupported()
+  const { openPromptWith, closePrompt } = usePrompt()
   const { handleResetLedgerTask } = useLedgerHardware()
   const { getExtensionAccount } = useExtensionAccounts()
   const { getAccount, requiresManualSign } = useImportedAccounts()
+  const { unit, units } = getNetworkData(network)
 
   // Store the uid for this transaction.
   const [uid, setUid] = useState<number>(0)
@@ -82,7 +98,8 @@ export const useSubmitExtrinsic = ({
       return
     }
 
-    const { specName } = tx.client.runtimeVersion
+    const { specName, specVersion } = tx.client.runtimeVersion
+    const ss58 = serviceApi.spec.ss58(specName)
     const { source } = account
     const isManualSigner = ManualSigners.includes(source)
 
@@ -113,10 +130,80 @@ export const useSubmitExtrinsic = ({
     }
 
     if (requiresManualSign(from)) {
+      const networkInfo = {
+        decimals: units,
+        tokenSymbol: unit,
+        specName,
+        specVersion,
+        ss58,
+      }
+
       const $Signature = serviceApi.codec.$Signature(specName)
       if (!$Signature) {
         onError('default')
         return
+      }
+      console.log('SEND THIS LOG: Checking the source: ' + source)
+      if (source === 'ledger') {
+        const metadata = await serviceApi.signer.metadata(specName)
+        const result = await signLedgerPayload(
+          specName,
+          from,
+          serviceApi.signer.extraSignedExtension,
+          tx,
+          metadata || '0x',
+          networkInfo,
+          (account as HardwareAccount).index
+        )
+        if (result) {
+          encodedSig = {
+            address: from,
+            signature: $Signature.tryDecode(result.signature),
+            extra: result.data,
+          }
+        }
+      }
+
+      if (source === 'vault') {
+        const extra = serviceApi.signer.extraSignedExtension(specName, from)
+        if (!extra) {
+          onError('default')
+          return
+        }
+        await extra.init()
+        const rawPayload = extra.toRawPayload(tx.callHex)
+        const prefixedPayload = concatU8a(
+          compactU32.encode(tx.callLength),
+          hexToU8a(rawPayload.data)
+        )
+        const result = await new VaultSigner({
+          openPrompt: (
+            onComplete: (
+              status: VaultSignStatus,
+              result: VaultSignatureResult
+            ) => void,
+            toSign: Uint8Array
+          ) => {
+            openPromptWith(
+              <SignPrompt
+                submitAddress={from}
+                onComplete={onComplete}
+                toSign={toSign}
+              />,
+              'sm',
+              false
+            )
+          },
+          closePrompt: () => closePrompt(),
+          setSubmitting: (val: boolean) =>
+            TxSubmission.setUidSubmitted(uid, val),
+        }).sign(prefixedPayload)
+
+        encodedSig = {
+          address: from,
+          signature: $Signature.tryDecode(result),
+          extra: extra.data,
+        }
       }
 
       // Custom signer
