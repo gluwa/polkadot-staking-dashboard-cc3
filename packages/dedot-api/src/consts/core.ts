@@ -1,14 +1,14 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { RelayChain } from '../types'
 
 export class CoreConsts<T extends RelayChain> {
   expectedBlockTime: bigint
   epochDuration: bigint
 
-  constructor(public api: DedotClient<T>) {
+  constructor(public api: LegacyClient<T>) {
     this.api = api
     this.fetch()
   }

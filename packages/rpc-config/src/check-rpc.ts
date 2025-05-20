@@ -1,7 +1,7 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { NetworkList, SystemChainList } from 'consts/networks'
+import { NetworkList } from 'consts/networks'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -29,16 +29,6 @@ for (const [
     endpoints: { rpc },
   },
 ] of Object.entries(NetworkList)) {
-  resultJson[id] = generateJson(rpc)
-}
-
-// Check system chain RPC endpoints
-for (const [
-  id,
-  {
-    endpoints: { rpc },
-  },
-] of Object.entries(SystemChainList)) {
   resultJson[id] = generateJson(rpc)
 }
 

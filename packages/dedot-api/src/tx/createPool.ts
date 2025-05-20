@@ -1,13 +1,13 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { PoolRoles } from 'types'
 import type { StakingChain } from '../types'
 import { asTxs } from '../util'
 
 export const createPool = <T extends StakingChain>(
-  api: DedotClient<T>,
+  api: LegacyClient<T>,
   from: string,
   poolId: number,
   bond: bigint,

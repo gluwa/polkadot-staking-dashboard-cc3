@@ -23,7 +23,6 @@ import { MenuProvider } from 'contexts/Menu'
 import { MigrateProvider } from 'contexts/Migrate'
 import { useNetwork } from 'contexts/Network'
 import { NominatorSetupsProvider } from 'contexts/NominatorSetups'
-import { OperatorsProvider } from 'contexts/Operators'
 import { PayoutsProvider } from 'contexts/Payouts'
 import { PluginsProvider } from 'contexts/Plugins'
 import { ActivePoolProvider } from 'contexts/Pools/ActivePool'
@@ -41,7 +40,6 @@ import { TxMetaProvider } from 'contexts/TxMeta'
 import { UIProvider } from 'contexts/UI'
 import { FavoriteValidatorsProvider } from 'contexts/Validators/FavoriteValidators'
 import { ValidatorsProvider } from 'contexts/Validators/ValidatorEntries'
-import { WalletConnectProvider } from 'contexts/WalletConnect'
 import { Tooltip } from 'radix-ui'
 import { ThemedRouter } from 'Themes'
 import { OverlayProvider } from 'ui-overlay'
@@ -69,7 +67,6 @@ export const Providers = () => {
       ExternalAccountsProvider,
       OtherAccountsProvider,
       ImportedAccountsProvider,
-      WalletConnectProvider,
       ProxiesProvider,
       HelpProvider,
       PluginsProvider,
@@ -95,7 +92,6 @@ export const Providers = () => {
       PromptProvider,
       MigrateProvider,
       FiltersProvider,
-      OperatorsProvider,
       Tooltip.Provider,
     ],
     ThemedRouter

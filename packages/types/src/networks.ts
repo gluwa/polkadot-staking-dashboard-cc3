@@ -5,17 +5,9 @@ import type { ChainProperties } from 'dedot/types/json-rpc'
 import type { HexString } from 'dedot/utils'
 import type { FunctionComponent, SVGProps } from 'react'
 
-export type ChainId = NetworkId | SystemChainId
+export type ChainId = NetworkId
 
-export type NetworkId = 'polkadot' | 'kusama' | 'westend'
-
-export type SystemChainId =
-  | 'people-polkadot'
-  | 'people-kusama'
-  | 'people-westend'
-  | 'statemint'
-  | 'statemine'
-  | 'westmint'
+export type NetworkId = 'creditcoin3-dev'
 
 export type ProviderType = 'ws' | 'sc'
 
@@ -61,8 +53,6 @@ export interface ChainConsts {
 
 export interface RelayMetrics {
   totalIssuance: bigint
-  auctionCounter: number
-  earliestStoredSession: number
 }
 
 export interface PoolsConfig {
@@ -108,19 +98,6 @@ export interface Network {
   units: number
   ss58: number
   defaultFeeReserve: bigint
-}
-
-export interface SystemChain {
-  name: string
-  ss58: number
-  units: number
-  unit: string
-  endpoints: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lightClient: () => Promise<any>
-    rpc: Record<string, string>
-  }
-  relayChain: NetworkId
 }
 
 export interface ChainIcons {

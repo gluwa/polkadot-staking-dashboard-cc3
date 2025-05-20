@@ -1,13 +1,13 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { PalletNominationPoolsBondExtra } from 'dedot/chaintypes'
 import type { StakingChain } from '../types'
 import { asTx } from '../util'
 
 export const poolBondExtra = <T extends StakingChain>(
-  api: DedotClient<T>,
+  api: LegacyClient<T>,
   type: 'FreeBalance' | 'Rewards',
   bond: bigint = 0n
 ) => {

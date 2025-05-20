@@ -1,17 +1,17 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import { AccountId32 } from 'dedot/codecs'
 import type { ErasStakersPagedEntries } from 'types'
 import type { StakingChain } from '../types'
 
 export const erasStakersPagedEntries = async <T extends StakingChain>(
-  api: DedotClient<T>,
+  api: LegacyClient<T>,
   era: number,
   validator: string
 ): Promise<ErasStakersPagedEntries> => {
-  const result = await api.query.staking.erasStakersPaged.entries(
+  const result = await api.query.staking.erasStakersPaged.pagedEntries(
     era,
     new AccountId32(validator)
   )

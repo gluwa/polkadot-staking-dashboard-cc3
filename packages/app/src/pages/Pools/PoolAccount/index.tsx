@@ -5,22 +5,12 @@ import { Polkicon } from '@w3ux/react-polkicon'
 import { ellipsisFn } from '@w3ux/utils'
 import { motion } from 'framer-motion'
 import { ButtonCopy } from 'library/ButtonCopy'
-import { getIdentityDisplay } from 'library/List/Utils'
 import { useTranslation } from 'react-i18next'
 import type { PoolAccountProps } from '../types'
 import { Wrapper } from './Wrapper'
 
-export const PoolAccount = ({ address, pool }: PoolAccountProps) => {
+export const PoolAccount = ({ address }: PoolAccountProps) => {
   const { t } = useTranslation('pages')
-
-  const roleIdentities = pool?.bondedPool?.roleIdentities
-  const identities = roleIdentities?.identities || {}
-  const supers = roleIdentities?.supers || {}
-  const synced = roleIdentities !== undefined
-
-  const display = address
-    ? getIdentityDisplay(identities[address], supers[address]).node
-    : null
 
   return (
     <Wrapper>
@@ -32,13 +22,6 @@ export const PoolAccount = ({ address, pool }: PoolAccountProps) => {
       >
         {address === null ? (
           <h4>{t('notSet')}</h4>
-        ) : synced && display !== null ? (
-          <>
-            <div className="icon">
-              <Polkicon address={address} />
-            </div>
-            <h4>{display}</h4>
-          </>
         ) : (
           <>
             <div className="icon">

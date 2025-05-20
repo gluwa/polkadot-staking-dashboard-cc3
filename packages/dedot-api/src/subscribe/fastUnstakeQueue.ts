@@ -1,7 +1,7 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { Unsub } from 'dedot/types'
 import { setFastUnstakeQueue } from 'global-bus'
 import type { StakingChain } from '../types'
@@ -12,7 +12,7 @@ export class FastUnstakeQueueQuery<T extends StakingChain> {
   #unsub: Unsub | undefined = undefined
 
   constructor(
-    public api: DedotClient<T>,
+    public api: LegacyClient<T>,
     public address: string
   ) {
     this.api = api

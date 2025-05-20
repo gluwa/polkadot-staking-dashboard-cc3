@@ -1,22 +1,20 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { ServiceInterface } from 'types'
+import type { CreditcoinServiceInterface } from 'types'
 
-export const defaultServiceInterface: ServiceInterface = {
+export const defaultServiceInterface: CreditcoinServiceInterface = {
   query: {
     erasValidatorRewardMulti: async () => [],
     bondedPool: async () => undefined,
     bondedPoolEntries: async () => [],
     erasStakersOverviewEntries: async () => [],
     erasStakersPagedEntries: async () => [],
-    identityOfMulti: async () => [],
     nominatorsMulti: async () => [],
     poolMembersMulti: async () => [],
     poolMetadataMulti: async () => [],
     proxies: async () => [],
     sessionValidators: async () => [],
-    superOfMulti: async () => [],
     validatorEntries: async () => [],
     validatorsMulti: async () => [],
   },

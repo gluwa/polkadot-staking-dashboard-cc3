@@ -29,12 +29,12 @@ import type {
   ChainConsts,
   ChainId,
   ChainSpec,
+  CreditcoinServiceInterface,
   ActiveEra as IActiveEra,
   PoolsConfig,
   ProviderType,
   RelayMetrics,
   RpcEndpoints,
-  ServiceInterface,
   StakingMetrics,
 } from 'types'
 import type { APIContextInterface, APIProviderProps } from './types'
@@ -78,7 +78,7 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
     defaultStakingMetrics
   )
   // Store the dedot api service interface
-  const [serviceApi, setServiceApi] = useState<ServiceInterface>(
+  const [serviceApi, setServiceApi] = useState<CreditcoinServiceInterface>(
     defaultServiceInterface
   )
 
@@ -120,6 +120,7 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
       setConsts(result)
     })
     const subActiveEra = activeEra$.subscribe((result) => {
+      console.log('Current era: ' + result)
       setActiveEra(result)
     })
     const subRelayMetrics = relayMetrics$.subscribe((result) => {

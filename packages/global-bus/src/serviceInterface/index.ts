@@ -1,7 +1,7 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { ServiceInterface } from 'types'
+import type { CreditcoinServiceInterface } from 'types'
 import { defaultServiceInterface } from './default'
 import { _serviceInterface } from './private'
 
@@ -11,7 +11,9 @@ export const resetServiceInterface = () => {
   _serviceInterface.next(defaultServiceInterface)
 }
 
-export const setServiceInterface = (serviceInterface: ServiceInterface) => {
+export const setServiceInterface = (
+  serviceInterface: CreditcoinServiceInterface
+) => {
   _serviceInterface.next(serviceInterface)
 }
 

@@ -4,7 +4,7 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { Unsub } from 'dedot/types'
 import {
   addActivePoolId,
@@ -20,7 +20,7 @@ export class StakingLedgerQuery<T extends StakingChain> {
   #poolId: number | undefined = undefined
 
   constructor(
-    public api: DedotClient<T>,
+    public api: LegacyClient<T>,
     public address: string
   ) {
     this.api = api

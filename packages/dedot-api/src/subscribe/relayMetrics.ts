@@ -1,7 +1,7 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { Unsub } from 'dedot/types'
 import { defaultRelayMetrics, setRelayMetrics } from 'global-bus'
 import type { RelayMetrics } from 'types'
@@ -12,7 +12,7 @@ export class RelayMetricsQuery<T extends RelayChain> {
 
   #unsub: Unsub | undefined = undefined
 
-  constructor(public api: DedotClient<T>) {
+  constructor(public api: LegacyClient<T>) {
     this.api = api
     this.subscribe()
   }
@@ -24,20 +24,10 @@ export class RelayMetricsQuery<T extends RelayChain> {
           fn: this.api.query.balances.totalIssuance,
           args: [],
         },
-        {
-          fn: this.api.query.auctions.auctionCounter,
-          args: [],
-        },
-        {
-          fn: this.api.query.paraSessionInfo.earliestStoredSession,
-          args: [],
-        },
       ],
-      ([totalIssuance, auctionCounter, earliestStoredSession]) => {
+      ([totalIssuance]) => {
         this.relayMetrics = {
           totalIssuance,
-          auctionCounter,
-          earliestStoredSession,
         }
         setRelayMetrics(this.relayMetrics)
       }

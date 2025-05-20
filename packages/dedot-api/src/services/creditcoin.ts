@@ -1,10 +1,9 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { WestendAssetHubApi } from '@dedot/chaintypes'
-import type { WestendApi } from '@dedot/chaintypes/westend'
-import type { WestendPeopleApi } from '@dedot/chaintypes/westend-people'
-import { ExtraSignedExtension, type DedotClient } from 'dedot'
+import type { PolkadotApi } from '@dedot/chaintypes/polkadot'
+import { formatAccountSs58 } from '@w3ux/utils'
+import { ExtraSignedExtension, type LegacyClient } from 'dedot'
 import {
   activeAddress$,
   activePoolIds$,
@@ -17,10 +16,9 @@ import {
 } from 'global-bus'
 import { pairwise, startWith, type Subscription } from 'rxjs'
 import type {
+  CreditcoinServiceInterface,
   NetworkConfig,
   NetworkId,
-  ServiceInterface,
-  SystemChainId,
 } from 'types'
 import { CoreConsts } from '../consts/core'
 import { StakingConsts } from '../consts/staking'
@@ -45,10 +43,10 @@ import { createPool } from '../tx/createPool'
 import type {
   AccountBalances,
   ActivePools,
-  DefaultServiceClass,
+  CreditcoinDefaultServiceClass,
   Proxies,
   StakingLedgers,
-} from '../types/serviceDefault'
+} from '../types/creditcoinDefault'
 import {
   diffImportedAccounts,
   diffPoolIds,
@@ -57,94 +55,59 @@ import {
   keysOf,
 } from '../util'
 
-export class WestendService
-  implements
-    DefaultServiceClass<
-      WestendApi,
-      WestendPeopleApi,
-      WestendAssetHubApi,
-      WestendApi
-    >
+export class CreditcoinService
+  implements CreditcoinDefaultServiceClass<PolkadotApi, PolkadotApi>
 {
-  relayChainSpec: ChainSpecs<WestendApi>
-  peopleChainSpec: ChainSpecs<WestendPeopleApi>
-  hubChainSpec: ChainSpecs<WestendAssetHubApi>
+  relayChainSpec: ChainSpecs<PolkadotApi>
 
   apiStatus: {
-    relay: ApiStatus<WestendApi>
-    people: ApiStatus<WestendPeopleApi>
-    hub: ApiStatus<WestendAssetHubApi>
+    relay: ApiStatus<PolkadotApi>
   }
-  coreConsts: CoreConsts<WestendApi>
-  stakingConsts: StakingConsts<WestendApi>
-  blockNumber: BlockNumberQuery<WestendApi>
-  activeEra: ActiveEraQuery<WestendApi>
-  relayMetrics: RelayMetricsQuery<WestendApi>
-  poolsConfig: PoolsConfigQuery<WestendApi>
-  stakingMetrics: StakingMetricsQuery<WestendApi>
-  eraRewardPoints: EraRewardPointsQuery<WestendApi>
-  fastUnstakeConfig: FastUnstakeConfigQuery<WestendApi>
-  fastUnstakeQueue: FastUnstakeQueueQuery<WestendApi>
+  coreConsts: CoreConsts<PolkadotApi>
+  stakingConsts: StakingConsts<PolkadotApi>
+  blockNumber: BlockNumberQuery<PolkadotApi>
+  activeEra: ActiveEraQuery<PolkadotApi>
+  relayMetrics: RelayMetricsQuery<PolkadotApi>
+  poolsConfig: PoolsConfigQuery<PolkadotApi>
+  stakingMetrics: StakingMetricsQuery<PolkadotApi>
+  eraRewardPoints: EraRewardPointsQuery<PolkadotApi>
+  fastUnstakeConfig: FastUnstakeConfigQuery<PolkadotApi>
+  fastUnstakeQueue: FastUnstakeQueueQuery<PolkadotApi>
 
   subActiveAddress: Subscription
-  subActiveEra: Subscription
   subImportedAccounts: Subscription
-  subAccountBalances: AccountBalances<
-    WestendApi,
-    WestendPeopleApi,
-    WestendAssetHubApi
-  > = {
+  subActiveEra: Subscription
+  subAccountBalances: AccountBalances<PolkadotApi> = {
     relay: {},
-    people: {},
-    hub: {},
   }
-  subStakingLedgers: StakingLedgers<WestendApi> = {}
-  subProxies: Proxies<WestendApi> = {}
+  subStakingLedgers: StakingLedgers<PolkadotApi> = {}
+  subProxies: Proxies<PolkadotApi> = {}
   subActivePoolIds: Subscription
-  subActivePools: ActivePools<WestendApi> = {}
+  subActivePools: ActivePools<PolkadotApi> = {}
 
   constructor(
     public networkConfig: NetworkConfig,
-    public ids: [NetworkId, SystemChainId, SystemChainId],
-    public apiRelay: DedotClient<WestendApi>,
-    public apiPeople: DedotClient<WestendPeopleApi>,
-    public apiHub: DedotClient<WestendAssetHubApi>
+    public ids: [NetworkId],
+    public apiRelay: LegacyClient<PolkadotApi>
   ) {
     this.apiStatus = {
       relay: new ApiStatus(this.apiRelay, ids[0], networkConfig),
-      people: new ApiStatus(this.apiPeople, ids[1], networkConfig),
-      hub: new ApiStatus(this.apiHub, ids[2], networkConfig),
-    }
-  }
-  getApi = (id: string) => {
-    if (id === this.ids[0]) {
-      return this.apiRelay
-    } else if (id === this.ids[1]) {
-      return this.apiPeople
-    } else {
-      return this.apiHub
     }
   }
 
+  getApi = () => this.apiRelay
+
   start = async () => {
     this.relayChainSpec = new ChainSpecs(this.apiRelay)
-    this.peopleChainSpec = new ChainSpecs(this.apiPeople)
-    this.hubChainSpec = new ChainSpecs(this.apiHub)
 
     this.coreConsts = new CoreConsts(this.apiRelay)
     this.stakingConsts = new StakingConsts(this.apiRelay)
 
     setSyncingMulti(defaultSyncStatus)
 
-    await Promise.all([
-      this.relayChainSpec.fetch(),
-      this.peopleChainSpec.fetch(),
-      this.hubChainSpec.fetch(),
-    ])
+    await Promise.all([this.relayChainSpec.fetch()])
     setMultiChainSpecs({
       [this.ids[0]]: this.relayChainSpec.get(),
-      [this.ids[1]]: this.peopleChainSpec.get(),
-      [this.ids[2]]: this.hubChainSpec.get(),
     })
     setConsts(this.ids[0], {
       ...this.coreConsts.get(),
@@ -184,22 +147,25 @@ export class WestendService
         prev.flat(),
         formatAccountAddresses(cur.flat(), ss58)
       )
+
       removed.forEach((account) => {
-        this.ids.forEach((id, i) => {
-          this.subAccountBalances[keysOf(this.subAccountBalances)[i]][
-            getAccountKey(id, account)
-          ]?.unsubscribe()
-        })
-        this.subStakingLedgers?.[account.address]?.unsubscribe()
-        this.subProxies?.[account.address]?.unsubscribe()
+        const address = formatAccountSs58(
+          account.address,
+          this.apiRelay.consts.system.ss58Prefix
+        )
+        if (address) {
+          this.ids.forEach((id, i) => {
+            this.subAccountBalances[keysOf(this.subAccountBalances)[i]][
+              getAccountKey(id, account)
+            ]?.unsubscribe()
+            this.subStakingLedgers?.[address]?.unsubscribe()
+            this.subProxies?.[address]?.unsubscribe()
+          })
+        }
       })
       added.forEach((account) => {
         this.subAccountBalances['relay'][getAccountKey(this.ids[0], account)] =
           new AccountBalanceQuery(this.apiRelay, this.ids[0], account.address)
-        this.subAccountBalances['people'][getAccountKey(this.ids[1], account)] =
-          new AccountBalanceQuery(this.apiPeople, this.ids[1], account.address)
-        this.subAccountBalances['hub'][getAccountKey(this.ids[2], account)] =
-          new AccountBalanceQuery(this.apiHub, this.ids[2], account.address)
 
         this.subStakingLedgers[account.address] = new StakingLedgerQuery(
           this.apiRelay,
@@ -260,14 +226,10 @@ export class WestendService
     this.eraRewardPoints?.unsubscribe()
     this.fastUnstakeQueue?.unsubscribe()
 
-    await Promise.all([
-      this.apiRelay.disconnect(),
-      this.apiPeople.disconnect(),
-      this.apiHub.disconnect(),
-    ])
+    await Promise.all([this.apiRelay.disconnect()])
   }
 
-  interface: ServiceInterface = {
+  interface: CreditcoinServiceInterface = {
     query: {
       erasValidatorRewardMulti: async (eras) =>
         await query.erasValidatorRewardMulti(this.apiRelay, eras),
@@ -279,8 +241,6 @@ export class WestendService
         await query.erasStakersOverviewEntries(this.apiRelay, era),
       erasStakersPagedEntries: async (era, validator) =>
         await query.erasStakersPagedEntries(this.apiRelay, era, validator),
-      identityOfMulti: async (addresses) =>
-        await query.identityOfMulti(this.apiPeople, addresses),
       nominatorsMulti: async (addresses) =>
         await query.nominatorsMulti(this.apiRelay, addresses),
       poolMembersMulti: async (addresses) =>
@@ -290,12 +250,6 @@ export class WestendService
       proxies: async (address) => await query.proxies(this.apiRelay, address),
       sessionValidators: async () =>
         await query.sessionValidators(this.apiRelay),
-      superOfMulti: async (addresses) =>
-        await query.superOfMulti(
-          this.apiPeople,
-          addresses,
-          this.apiPeople.consts.system.ss58Prefix
-        ),
       validatorEntries: async () => await query.validatorEntries(this.apiRelay),
       validatorsMulti: async (addresses) =>
         await query.validatorsMulti(this.apiRelay, addresses),
@@ -372,25 +326,21 @@ export class WestendService
         tx.transferKeepAlive(this.apiRelay, to, value),
     },
     signer: {
-      extraSignedExtension: (
-        specName,
-        signerAddress,
-        payloadOptions = undefined
-      ) =>
-        new ExtraSignedExtension(this.getApi(specName), {
+      extraSignedExtension: (signerAddress, payloadOptions = undefined) =>
+        new ExtraSignedExtension(this.getApi(), {
           signerAddress,
           payloadOptions,
         }),
-      metadata: async (specName) =>
-        await this.getApi(specName).call.metadata.metadataAtVersion(15),
+      metadata: async () =>
+        await this.getApi().call.metadata.metadataAtVersion(15),
     },
     spec: {
-      ss58: (specName) => this.getApi(specName).consts.system.ss58Prefix,
+      ss58: () => this.getApi().consts.system.ss58Prefix,
     },
     codec: {
-      $Signature: (specName) =>
-        this.getApi(specName).registry.findCodec(
-          this.getApi(specName).registry.metadata.extrinsic.signatureTypeId
+      $Signature: () =>
+        this.getApi().registry.findCodec(
+          this.getApi().registry.metadata.extrinsic.signatureTypeId
         ),
     },
   }

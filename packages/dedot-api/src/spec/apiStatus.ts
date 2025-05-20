@@ -1,14 +1,14 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import { setApiStatus } from 'global-bus'
 import type { ChainId, NetworkConfig } from 'types'
 import type { Chain } from '../types'
 
 export class ApiStatus<T extends Chain> {
   constructor(
-    public api: DedotClient<T>,
+    public api: LegacyClient<T>,
     public chainId: ChainId,
     public networkConfig: NetworkConfig
   ) {

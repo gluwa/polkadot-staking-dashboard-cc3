@@ -5,6 +5,4 @@ import type { RelayMetrics } from 'types'
 
 export const defaultRelayMetrics: RelayMetrics = {
   totalIssuance: 0n,
-  auctionCounter: 0,
-  earliestStoredSession: 0,
 }

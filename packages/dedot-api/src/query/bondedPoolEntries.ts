@@ -1,14 +1,14 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { BondedPoolQuery } from 'types'
 import type { StakingChain } from '../types'
 
 export const bondedPoolEntries = async <T extends StakingChain>(
-  api: DedotClient<T>
+  api: LegacyClient<T>
 ): Promise<[number, BondedPoolQuery][]> => {
-  const results = await api.query.nominationPools.bondedPools.entries()
+  const results = await api.query.nominationPools.bondedPools.pagedEntries()
 
   return results.map(([id, pool]) => {
     const current: [number, string] | undefined = pool.commission.current

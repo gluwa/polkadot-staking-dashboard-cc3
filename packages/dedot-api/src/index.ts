@@ -28,15 +28,7 @@ export const initDedotService = async () => {
 
       const { network, ...rest } = cur
       // Type narrow services and apis
-      if (network === 'westend') {
-        const { Service, apis, ids } = await getDefaultService(network, rest)
-        service = new Service(cur, ids, ...apis)
-      }
-      if (network === 'kusama') {
-        const { Service, apis, ids } = await getDefaultService(network, rest)
-        service = new Service(cur, ids, ...apis)
-      }
-      if (network === 'polkadot') {
+      if (network === 'creditcoin3-dev') {
         const { Service, apis, ids } = await getDefaultService(network, rest)
         service = new Service(cur, ids, ...apis)
       }

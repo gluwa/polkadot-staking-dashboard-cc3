@@ -12,7 +12,6 @@ import type { BytesLike } from 'dedot/codecs'
 import type { Shape } from 'dedot/shape'
 import type { PayloadOptions } from 'dedot/types'
 import type { HexString } from 'dedot/utils'
-import type { IdentityOf, SuperOf } from './identity'
 import type { NominatorsMultiQuery } from './nominate'
 import type { BondedPoolQuery, ClaimPermission, PoolRoles } from './pools'
 import type {
@@ -20,7 +19,7 @@ import type {
   ErasStakersPagedEntries,
 } from './staking'
 
-export interface ServiceInterface {
+export interface CreditcoinServiceInterface {
   query: {
     erasValidatorRewardMulti: (
       eras: number[]
@@ -34,7 +33,6 @@ export interface ServiceInterface {
       era: number,
       validator: string
     ) => Promise<ErasStakersPagedEntries>
-    identityOfMulti: (addresses: string[]) => Promise<IdentityOf[]>
     nominatorsMulti: (addresses: string[]) => Promise<NominatorsMultiQuery>
     poolMembersMulti: (
       addresses: string[]
@@ -42,7 +40,6 @@ export interface ServiceInterface {
     poolMetadataMulti: (ids: number[]) => Promise<HexString[]>
     proxies: (address: string) => Promise<string[]>
     sessionValidators: () => Promise<string[]>
-    superOfMulti: (addresses: string[]) => Promise<SuperOf[]>
     validatorEntries: () => Promise<[string, PalletStakingValidatorPrefs][]>
     validatorsMulti: (
       addresses: string[]
@@ -149,7 +146,6 @@ export interface ServiceInterface {
   }
   signer: {
     extraSignedExtension: (
-      specName: string,
       signerAddress: string,
       payloadOptions?: PayloadOptions
     ) => ExtraSignedExtension | undefined

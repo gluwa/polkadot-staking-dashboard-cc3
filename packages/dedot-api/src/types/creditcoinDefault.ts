@@ -1,22 +1,14 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { Subscription } from 'rxjs'
 import type {
+  CreditcoinServiceInterface,
   NetworkConfig,
   NetworkId,
-  ServiceInterface,
-  SystemChainId,
 } from 'types'
-import type {
-  AssetHubChain,
-  PeopleChain,
-  RelayChain,
-  Service,
-  ServiceType,
-  StakingChain,
-} from '.'
+import type { RelayChain, Service, ServiceType, StakingChain } from '.'
 import { ServiceClass } from '.'
 import type { CoreConsts } from '../consts/core'
 import type { StakingConsts } from '../consts/staking'
@@ -36,33 +28,23 @@ import type { StakingLedgerQuery } from '../subscribe/stakingLedger'
 import type { StakingMetricsQuery } from '../subscribe/stakingMetrics'
 
 // Required interface for all default services
-export abstract class DefaultServiceClass<
+export abstract class CreditcoinDefaultServiceClass<
   RelayApi extends RelayChain,
-  PeopleApi extends PeopleChain,
-  HubApi extends AssetHubChain,
   StakingApi extends StakingChain,
 > extends ServiceClass {
   constructor(
     public networkConfig: NetworkConfig,
-    public apiRelay: DedotClient<RelayApi>,
-    public apiPeople: DedotClient<PeopleApi>,
-    public apiHub: DedotClient<HubApi>
+    public apiRelay: LegacyClient<RelayApi>
   ) {
     super()
   }
-  abstract ids: [NetworkId, SystemChainId, SystemChainId]
+  abstract ids: [NetworkId]
   abstract apiStatus: {
     relay: ApiStatus<RelayApi>
-    people: ApiStatus<PeopleApi>
-    hub: ApiStatus<HubApi>
   }
-  abstract getApi: (
-    id: string
-  ) => DedotClient<RelayApi> | DedotClient<PeopleApi> | DedotClient<HubApi>
+  abstract getApi: (id: string) => LegacyClient<RelayApi>
 
   abstract relayChainSpec: ChainSpecs<RelayApi>
-  abstract peopleChainSpec: ChainSpecs<PeopleApi>
-  abstract hubChainSpec: ChainSpecs<HubApi>
 
   abstract coreConsts: CoreConsts<RelayApi>
   abstract stakingConsts: StakingConsts<StakingApi>
@@ -78,35 +60,25 @@ export abstract class DefaultServiceClass<
   subActiveAddress: Subscription
   subImportedAccounts: Subscription
   subActiveEra: Subscription
-  subAccountBalances: AccountBalances<RelayApi, PeopleApi, HubApi>
+  subAccountBalances: AccountBalances<RelayApi>
   subStakingLedgers: StakingLedgers<StakingApi>
   subActivePoolIds: Subscription
   subActivePools: ActivePools<StakingApi>
   subProxies: Proxies<StakingApi>
 
-  abstract interface: ServiceInterface
+  abstract interface: CreditcoinServiceInterface
 }
 
 // Default interface a default service factory returns
-export type DefaultService<T extends keyof ServiceType> = {
+export type CreditcoinDefaultService<T extends keyof ServiceType> = {
   Service: ServiceType[T]
-  apis: [
-    DedotClient<Service[T][0]>,
-    DedotClient<Service[T][1]>,
-    DedotClient<Service[T][2]>,
-  ]
-  ids: [NetworkId, SystemChainId, SystemChainId]
+  apis: [LegacyClient<Service[T][0]>]
+  ids: [NetworkId]
 }
 
 // Account balances record
-export type AccountBalances<
-  RelayApi extends RelayChain,
-  PeopleApi extends PeopleChain,
-  HubApi extends AssetHubChain,
-> = {
+export type AccountBalances<RelayApi extends RelayChain> = {
   relay: Record<string, AccountBalanceQuery<RelayApi>>
-  people: Record<string, AccountBalanceQuery<PeopleApi>>
-  hub: Record<string, AccountBalanceQuery<HubApi>>
 }
 
 // Staking ledgers record

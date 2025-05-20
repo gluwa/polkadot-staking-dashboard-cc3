@@ -3,7 +3,7 @@
 
 import { extractUrlValue, localStorageOrDefault } from '@w3ux/utils'
 import { NetworkKey, ProviderTypeKey, rpcEndpointKey } from 'consts'
-import { DefaultNetwork, NetworkList, SystemChainList } from 'consts/networks'
+import { DefaultNetwork, NetworkList } from 'consts/networks'
 import { getDefaultRpcEndpoints, getEnabledNetworks } from 'consts/util'
 import type {
   NetworkConfig,
@@ -51,9 +51,7 @@ export const getInitialRpcEndpoints = (network: NetworkId): RpcEndpoints => {
       Object.values(b).every((v) => typeof v === 'string')
     // Check if values are valid RPC keys
     const valueCheck = Object.entries(a).every(([k, v]) =>
-      Object.keys(
-        { ...NetworkList, ...SystemChainList }[k]?.endpoints?.rpc || []
-      ).includes(v)
+      Object.keys({ ...NetworkList }[k]?.endpoints?.rpc || []).includes(v)
     )
     return typeCheck && valueCheck
   }

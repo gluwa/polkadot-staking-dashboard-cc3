@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { maxBigInt } from '@w3ux/utils'
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { Unsub } from 'dedot/types'
 import { removeAccountBalance, setAccountBalance } from 'global-bus'
 import type { AccountBalance, ChainId } from 'types'
@@ -15,7 +15,7 @@ export class AccountBalanceQuery<T extends Chain> {
   #unsub: Unsub | undefined = undefined
 
   constructor(
-    public api: DedotClient<T>,
+    public api: LegacyClient<T>,
     public chainId: ChainId,
     public address: string
   ) {
@@ -31,7 +31,7 @@ export class AccountBalanceQuery<T extends Chain> {
         // the active ledger from free balance for other relay chains
         let free: bigint = data.free
         if (['polkadot', 'kusama'].includes(this.api.runtimeVersion.specName)) {
-          const api = this.api as unknown as DedotClient<StakingChain>
+          const api = this.api as unknown as LegacyClient<StakingChain>
           const ledger = await api.query.staking.ledger(this.address)
           const active = ledger?.active || 0n
           free = maxBigInt(data.free - active, 0n)

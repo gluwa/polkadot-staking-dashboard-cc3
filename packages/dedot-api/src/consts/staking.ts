@@ -1,7 +1,7 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import { toU8a } from 'dedot/utils'
 import type { StakingChain } from '../types'
 
@@ -13,7 +13,7 @@ export class StakingConsts<T extends StakingChain> {
   fastUnstakeDeposit: bigint
   poolsPalletId: Uint8Array
 
-  constructor(public api: DedotClient<T>) {
+  constructor(public api: LegacyClient<T>) {
     this.api = api
     this.fetch()
   }

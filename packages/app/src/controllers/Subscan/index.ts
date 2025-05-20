@@ -63,7 +63,7 @@ export class Subscan {
   }
 
   // Get the public Subscan endpoint
-  static getEndpoint = () => `https://${this.network}.api.subscan.io`
+  static getEndpoint = () => `https://creditcoin3-dev.api.subscan.io`
 
   // Make a request to Subscan and return any data returned from the response
   static makeRequest = async (endpoint: string, body: SubscanRequestBody) => {

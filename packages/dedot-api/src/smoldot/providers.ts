@@ -4,7 +4,7 @@
 import { SmoldotProvider } from 'dedot'
 import type { Client, SmoldotBytecode } from 'smoldot'
 import { startWithBytecode } from 'smoldot/no-auto-bytecode'
-import type { Network, SystemChain } from 'types'
+import type { Network } from 'types'
 import type { WorkerOpts } from './types'
 
 // Instantiate smoldot from worker
@@ -41,17 +41,12 @@ export const newRelayChainSmProvider = async (networkData: Network) => {
 }
 
 // Instantiate a new system chain smoldot provider
-export const newSystemChainSmProvider = async (
-  networkData: Network,
-  systemChainData: SystemChain
-) => {
+export const newSystemChainSmProvider = async (networkData: Network) => {
   const client = initSmWorker()
   const { chainSpec } = await networkData.endpoints.lightClient()
-  const { chainSpec: paraChainSpec } =
-    await systemChainData.endpoints.lightClient()
 
   const chain = await client.addChain({
-    chainSpec: paraChainSpec,
+    chainSpec,
     potentialRelayChains: [await client.addChain({ chainSpec })],
   })
   return new SmoldotProvider(chain)

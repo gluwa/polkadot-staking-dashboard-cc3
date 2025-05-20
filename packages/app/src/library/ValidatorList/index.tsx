@@ -71,7 +71,7 @@ export const ValidatorListInner = ({
   const { activeAddress } = useActiveAccounts()
   const { setModalResize } = useOverlay().modal
   const { injectValidatorListData } = useValidators()
-  const { isReady, activeEra, getApiStatus } = useApi()
+  const { isReady, activeEra } = useApi()
   const { applyFilter, applyOrder, applySearch } = useValidatorFilters()
   const {
     selected,
@@ -278,7 +278,7 @@ export const ValidatorListInner = ({
     if (allowFilters && fetched) {
       handleValidatorsFilterUpdate()
     }
-  }, [order, includes, excludes, getApiStatus(`people-${network}`)])
+  }, [order, includes, excludes])
 
   // Handle modal resize on list format change
   useEffect(() => {

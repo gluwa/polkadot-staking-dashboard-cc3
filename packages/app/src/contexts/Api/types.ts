@@ -8,11 +8,11 @@ import type {
   ChainConsts,
   ChainId,
   ChainSpec,
+  CreditcoinServiceInterface,
   NetworkId,
   PoolsConfig,
   ProviderType,
   RelayMetrics,
-  ServiceInterface,
   StakingMetrics,
 } from 'types'
 
@@ -32,5 +32,5 @@ export interface APIContextInterface {
   activeEra: ActiveEra
   poolsConfig: PoolsConfig
   stakingMetrics: StakingMetrics
-  serviceApi: ServiceInterface
+  serviceApi: CreditcoinServiceInterface
 }

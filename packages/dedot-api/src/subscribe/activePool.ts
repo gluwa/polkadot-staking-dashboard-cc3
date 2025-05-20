@@ -4,25 +4,21 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { DedotClient } from 'dedot'
+import type { LegacyClient } from 'dedot'
 import type { Unsub } from 'dedot/types'
 import { addActivePool, removeActivePool } from 'global-bus'
-import type { ActivePool, ServiceInterface } from 'types'
-import {
-  createPoolAccounts,
-  formatIdentities,
-  formatSuperIdentities,
-} from 'utils'
+import type { ActivePool, CreditcoinServiceInterface } from 'types'
+import { createPoolAccounts } from 'utils'
 import type { StakingChain } from '../types'
 
 export class ActivePoolQuery<T extends StakingChain> {
   #unsub: Unsub | undefined = undefined
 
   constructor(
-    public api: DedotClient<T>,
+    public api: LegacyClient<T>,
     public poolId: number,
     public poolsPalletId: Uint8Array,
-    public serviceInterface: ServiceInterface
+    public serviceInterface: CreditcoinServiceInterface
   ) {
     this.api = api
     this.subscribe()
@@ -60,14 +56,6 @@ export class ActivePoolQuery<T extends StakingChain> {
             targets: [],
             submittedIn: 0,
           }
-          const roleAddresses = Object.values(bondedPool.roles).map((role) =>
-            role.address(this.api.consts.system.ss58Prefix)
-          )
-
-          const [identities, supers] = await Promise.all([
-            this.serviceInterface.query.identityOfMulti(roleAddresses),
-            this.serviceInterface.query.superOfMulti(roleAddresses),
-          ])
 
           const activePool: ActivePool = {
             id: this.poolId,
@@ -88,10 +76,6 @@ export class ActivePoolQuery<T extends StakingChain> {
                 bouncer: bondedPool.roles.bouncer?.address(
                   this.api.consts.system.ss58Prefix
                 ),
-              },
-              roleIdentities: {
-                identities: formatIdentities(roleAddresses, identities),
-                supers: formatSuperIdentities(supers),
               },
               state: bondedPool.state,
             },

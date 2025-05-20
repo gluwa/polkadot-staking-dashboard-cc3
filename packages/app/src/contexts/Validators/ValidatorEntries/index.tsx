@@ -24,11 +24,7 @@ import type {
   Validator,
   ValidatorStatus,
 } from 'types'
-import {
-  formatIdentities,
-  formatSuperIdentities,
-  perbillToPercent,
-} from 'utils'
+import { perbillToPercent } from 'utils'
 import type {
   ValidatorAddresses,
   ValidatorListEntry,
@@ -50,7 +46,7 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   const { pluginEnabled } = usePlugins()
   const { stakers } = useStaking().eraStakers
   const { erasPerDay, maxSupportedDays } = useErasPerDay()
-  const { isReady, getConsts, serviceApi, getApiStatus } = useApi()
+  const { isReady, getConsts, serviceApi } = useApi()
   const { historyDepth } = getConsts(network)
 
   // Store validator entries and sync status
@@ -169,15 +165,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     setAvgCommission(avg)
     // NOTE: validators are shuffled before committed to state
     setValidators({ status: 'synced', validators: shuffle(validatorEntries) })
-
-    const addresses = validatorEntries.map(({ address }) => address)
-
-    const [identities, supers] = await Promise.all([
-      serviceApi.query.identityOfMulti(addresses),
-      serviceApi.query.superOfMulti(addresses),
-    ])
-    setValidatorIdentities({ ...formatIdentities(addresses, identities) })
-    setValidatorSupers({ ...formatSuperIdentities(supers) })
   }
 
   // Subscribe to active session validators
@@ -381,7 +368,7 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     if (isReady && activeEra.index > 0) {
       fetchValidators()
     }
-  }, [validators.status, isReady, getApiStatus(`people-${network}`), activeEra])
+  }, [validators.status, isReady, activeEra])
 
   // Mark unsynced and fetch session validators and average reward when activeEra changes
   useEffectIgnoreInitial(() => {
