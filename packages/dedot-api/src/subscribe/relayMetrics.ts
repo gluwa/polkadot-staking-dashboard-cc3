@@ -25,18 +25,14 @@ export class RelayMetricsQuery<T extends RelayChain> {
           args: [],
         },
         {
-          fn: this.api.query.auctions.auctionCounter,
-          args: [],
-        },
-        {
-          fn: this.api.query.paraSessionInfo.earliestStoredSession,
+          fn: this.api.query.historical.storedRange,
           args: [],
         },
       ],
-      ([totalIssuance, auctionCounter, earliestStoredSession]) => {
+      ([totalIssuance, storedRange]) => {
+        const earliestStoredSession = storedRange?.[0] ?? 0
         this.relayMetrics = {
           totalIssuance,
-          auctionCounter,
           earliestStoredSession,
         }
         setRelayMetrics(this.relayMetrics)
