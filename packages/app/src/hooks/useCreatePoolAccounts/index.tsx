@@ -7,11 +7,12 @@ import { createPoolAccounts as createUtil } from 'utils'
 
 export const useCreatePoolAccounts = () => {
   const { network } = useNetwork()
-  const { getConsts } = useApi()
+  const { getChainSpec, getConsts } = useApi()
   const { poolsPalletId } = getConsts(network)
+  const { ss58Format } = getChainSpec(network)?.properties ?? { ss58Format: 0 }
 
   const createPoolAccounts = (poolId: number) =>
-    createUtil(poolId, poolsPalletId)
+    createUtil(poolId, poolsPalletId, ss58Format)
 
   return createPoolAccounts
 }

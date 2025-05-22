@@ -326,7 +326,11 @@ export class CreditcoinService
         tx.transferKeepAlive(this.apiRelay, to, value),
     },
     signer: {
-      extraSignedExtension: (signerAddress, payloadOptions = undefined) =>
+      extraSignedExtension: (
+        specName,
+        signerAddress,
+        payloadOptions = undefined
+      ) =>
         new ExtraSignedExtension(this.getApi(), {
           signerAddress,
           payloadOptions,

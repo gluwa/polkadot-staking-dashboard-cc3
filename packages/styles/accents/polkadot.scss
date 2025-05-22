@@ -2,7 +2,7 @@
 SPDX-License-Identifier: GPL-3.0-only */
 
 .theme-creditcoin3-dev {
-  $base-primary: rgb(211, 48, 121);
+  $base-primary: #3dc77a;
   $base-secondary: rgb(110, 71, 207);
 
   @for $i from 0 through 19 {
@@ -27,8 +27,8 @@ SPDX-License-Identifier: GPL-3.0-only */
   --accent-color-tertiary-light: rgb(221, 217, 231);
   --accent-color-tertiary-dark: rgb(50, 38, 76);
 
-  --accent-color-stroke-light: rgb(211 48 121);
-  --accent-color-stroke-dark: rgb(211 48 121);
+  --accent-color-stroke-light: rgba(156, 255, 170, 0.5);
+  --accent-color-stroke-dark: rgba(156, 255, 170, 0.5);
 
   --accent-color-transparent-light: rgb(211 48 121 / 5%);
   --accent-color-transparent-dark: rgb(211 48 121 / 5%);
