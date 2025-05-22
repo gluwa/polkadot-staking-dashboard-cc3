@@ -120,7 +120,6 @@ export const APIProvider = ({ children, network }: APIProviderProps) => {
       setConsts(result)
     })
     const subActiveEra = activeEra$.subscribe((result) => {
-      console.log('Current era: ' + result)
       setActiveEra(result)
     })
     const subRelayMetrics = relayMetrics$.subscribe((result) => {

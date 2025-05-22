@@ -53,6 +53,8 @@ export interface ChainConsts {
 
 export interface RelayMetrics {
   totalIssuance: bigint
+  auctionCounter: number
+  earliestStoredSession: number
 }
 
 export interface PoolsConfig {

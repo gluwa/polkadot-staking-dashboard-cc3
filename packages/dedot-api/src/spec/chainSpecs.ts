@@ -18,6 +18,8 @@ export class ChainSpecs<T extends Chain> {
   }
 
   async fetch() {
+    this.genesisHash = await this.api.genesisHash
+    this.properties = await this.api.rpc.system_properties()
     this.existentialDeposit = this.api.consts.balances.existentialDeposit
     this.version = this.api.consts.system.version
   }

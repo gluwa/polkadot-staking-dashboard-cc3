@@ -24,10 +24,20 @@ export class RelayMetricsQuery<T extends RelayChain> {
           fn: this.api.query.balances.totalIssuance,
           args: [],
         },
+        {
+          fn: this.api.query.auctions.auctionCounter,
+          args: [],
+        },
+        {
+          fn: this.api.query.paraSessionInfo.earliestStoredSession,
+          args: [],
+        },
       ],
-      ([totalIssuance]) => {
+      ([totalIssuance, auctionCounter, earliestStoredSession]) => {
         this.relayMetrics = {
           totalIssuance,
+          auctionCounter,
+          earliestStoredSession,
         }
         setRelayMetrics(this.relayMetrics)
       }

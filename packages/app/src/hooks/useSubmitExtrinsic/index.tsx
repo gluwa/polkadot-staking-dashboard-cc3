@@ -143,7 +143,6 @@ export const useSubmitExtrinsic = ({
         onError('default')
         return
       }
-      console.log('SEND THIS LOG: Checking the source: ' + source)
       if (source === 'ledger') {
         const metadata = await serviceApi.signer.metadata(specName)
         const result = await signLedgerPayload(
