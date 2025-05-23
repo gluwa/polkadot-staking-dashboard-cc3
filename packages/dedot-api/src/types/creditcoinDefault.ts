@@ -19,7 +19,6 @@ import type { ActiveEraQuery } from '../subscribe/activeEra'
 import type { ActivePoolQuery } from '../subscribe/activePool'
 import type { BlockNumberQuery } from '../subscribe/blockNumber'
 import type { EraRewardPointsQuery } from '../subscribe/eraRewardPoints'
-import type { FastUnstakeConfigQuery } from '../subscribe/fastUnstakeConfig'
 import type { FastUnstakeQueueQuery } from '../subscribe/fastUnstakeQueue'
 import type { PoolsConfigQuery } from '../subscribe/poolsConfig'
 import type { ProxiesQuery } from '../subscribe/proxies'
@@ -54,7 +53,6 @@ export abstract class CreditcoinDefaultServiceClass<
   abstract poolsConfig: PoolsConfigQuery<StakingApi>
   abstract stakingMetrics: StakingMetricsQuery<StakingApi>
   abstract eraRewardPoints: EraRewardPointsQuery<StakingApi>
-  abstract fastUnstakeConfig: FastUnstakeConfigQuery<StakingApi>
   abstract fastUnstakeQueue: FastUnstakeQueueQuery<StakingApi>
 
   subActiveAddress: Subscription

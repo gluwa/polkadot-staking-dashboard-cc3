@@ -4,7 +4,6 @@
 import { PagesConfig } from 'config/pages'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useNetwork } from 'contexts/Network'
-import { usePlugins } from 'contexts/Plugins'
 import { useUi } from 'contexts/UI'
 import { useAccountFromUrl } from 'hooks/useAccountFromUrl'
 import { ErrorFallbackApp, ErrorFallbackRoutes } from 'library/ErrorBoundary'
@@ -38,7 +37,6 @@ const RouterInner = () => {
   const navigate = useNavigate()
   const { network } = useNetwork()
   const { pathname } = useLocation()
-  const { pluginEnabled } = usePlugins()
   const { activeAddress } = useActiveAccounts()
   const { setContainerRefs, advancedMode } = useUi()
 
@@ -68,9 +66,7 @@ const RouterInner = () => {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallbackApp}>
       <ApolloProvider client={client}>
-        {pluginEnabled('staking_api') && activeAddress && (
-          <StakingApi who={activeAddress} network={network} />
-        )}
+        {activeAddress && <StakingApi activeAccount={activeAddress} />}
         <NotificationPrompts />
         <Page.Body>
           <Help />

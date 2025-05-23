@@ -51,3 +51,11 @@ export interface LocalValidatorEntriesData {
 export type ValidatorListEntry = Validator & {
   validatorStatus: ValidatorStatus
 }
+
+export interface LocalValidatorExposure {
+  staked: string
+  total: string
+  share: string
+  isValidator: boolean
+  exposedPage: number
+}

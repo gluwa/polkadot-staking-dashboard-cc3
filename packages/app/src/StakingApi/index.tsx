@@ -1,27 +1,38 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { useFastUnstake } from 'contexts/FastUnstake'
-import { useStaking } from 'contexts/Staking'
+import { useApi } from 'contexts/Api'
+import { useNetwork } from 'contexts/Network'
+import { usePayouts } from 'contexts/Payouts'
+import { ApolloProvider, client, useUnclaimedRewards } from 'plugin-staking-api'
 import { useEffect } from 'react'
-import { FastUnstakeApi } from './FastUnstakeApi'
-import type { Props } from './types'
-import { UnclaimedRewardsApi } from './UnclaimedRewardsApi'
 
-export const StakingApi = (props: Props) => {
-  const { isBonding } = useStaking()
-  const { setFastUnstakeStatus } = useFastUnstake()
-
-  useEffect(() => {
-    if (!isBonding()) {
-      setFastUnstakeStatus(null)
-    }
-  }, [isBonding()])
-
-  return (
-    <>
-      <UnclaimedRewardsApi {...props} />
-      {isBonding() && <FastUnstakeApi {...props} />}
-    </>
-  )
+interface Props {
+  activeAccount: string
 }
+
+const Inner = ({ activeAccount }: Props) => {
+  const { activeEra } = useApi()
+  const { network } = useNetwork()
+  const { setUnclaimedRewards } = usePayouts()
+  const { data, loading, error } = useUnclaimedRewards({
+    network,
+    who: activeAccount,
+    fromEra: Math.max(activeEra.index - 1, 0),
+  })
+
+  // Update unclaimed rewards on total change
+  useEffect(() => {
+    if (!loading && !error && data?.unclaimedRewards) {
+      setUnclaimedRewards(data?.unclaimedRewards)
+    }
+  }, [data?.unclaimedRewards.total])
+
+  return null
+}
+
+export const StakingApi = (props: Props) => (
+  <ApolloProvider client={client}>
+    <Inner {...props} />
+  </ApolloProvider>
+)

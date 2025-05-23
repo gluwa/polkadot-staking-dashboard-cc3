@@ -2,10 +2,20 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { AccountId32 } from 'dedot/codecs'
+import type { MaybeAddress } from './accounts'
+
+export interface MetaInterface {
+  checked: number[]
+}
 
 export interface FastUnstakeConfig {
-  head: FastUnstakeHead
-  counterForQueue: number
+  getLocalkey: (address: MaybeAddress) => string
+  checking: boolean
+  meta: MetaInterface
+  isExposed: boolean | null
+  queueDeposit: FastUnstakeQueue
+  head: FastUnstakeHead | undefined
+  counterForQueue: number | undefined
 }
 
 export interface FastUnstakeHead {

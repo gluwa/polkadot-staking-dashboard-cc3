@@ -3,7 +3,7 @@
 
 import type { LegacyClient } from 'dedot'
 import type { Unsub } from 'dedot/types'
-import { defaultFastUnstakeConfig, setFastUnstakeConfig } from 'global-bus'
+import { defaultFastUnstakeConfig, defaultMeta, setFastUnstakeConfig } from 'global-bus'
 import type { FastUnstakeConfig } from 'types'
 import type { StakingChain } from '../types'
 
@@ -38,6 +38,11 @@ export class FastUnstakeConfigQuery<T extends StakingChain> {
             checked,
           },
           counterForQueue,
+          getLocalkey: () => '',
+          checking: false,
+          meta: defaultMeta,
+          isExposed: null,
+          queueDeposit: undefined,
         }
         this.config = config
         setFastUnstakeConfig(this.config)

@@ -48,7 +48,7 @@ export const ManageBond = () => {
   const { isReadOnlyAccount } = useImportedAccounts()
   const { getTransferOptions } = useTransferOptions()
   const { getNominationStatus } = useNominationStatus()
-  const { exposed, fastUnstakeStatus } = useFastUnstake()
+  const { checking, isExposed } = useFastUnstake()
 
   const { ledger } = getStakingLedger(activeAddress)
   const { units } = getNetworkData(network)
@@ -64,11 +64,10 @@ export const ManageBond = () => {
   const unstakeButton =
     erasToCheckPerBlock > 0 &&
     !nominationStatus.nominees.active.length &&
-    fastUnstakeStatus !== null &&
-    !exposed ? (
+    (checking || !isExposed) ? (
       <ButtonPrimary
         size="md"
-        disabled={isReadOnlyAccount(activeAddress)}
+        disabled={checking || isReadOnlyAccount(activeAddress)}
         text={getFastUnstakeText()}
         iconLeft={faBolt}
         onClick={() => {

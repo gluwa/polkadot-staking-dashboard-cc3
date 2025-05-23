@@ -67,23 +67,6 @@ export type PoolRewardResults = Query & {
   }
 }
 
-export type FastUnstakeStatus =
-  | 'UNSUPPORTED_CHAIN'
-  | 'NOT_PROCESSED'
-  | 'NOT_EXPOSED'
-  | 'EXPOSED'
-
-export interface FastUnstakeResult {
-  status: FastUnstakeStatus
-  lastExposed?: number
-}
-
-export type CanFastUnstakeResult = Query & {
-  data: {
-    canFastUnstake: FastUnstakeResult
-  }
-}
-
 export type RewardTrendResult = Query & {
   data: {
     rewardTrend: RewardTrend

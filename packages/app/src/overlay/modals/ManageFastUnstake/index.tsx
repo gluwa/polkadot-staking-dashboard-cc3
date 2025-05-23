@@ -37,8 +37,7 @@ export const ManageFastUnstake = () => {
   const { getSignerWarnings } = useSignerWarnings()
   const { setModalResize, setModalStatus } = useOverlay().modal
   const { feeReserve, getTransferOptions } = useTransferOptions()
-  const { counterForQueue, queueDeposit, fastUnstakeStatus, exposed } =
-    useFastUnstake()
+  const { isExposed, counterForQueue, queueDeposit, meta } = useFastUnstake()
 
   const { unit, units } = getNetworkData(network)
   const { bondDuration, fastUnstakeDeposit } = getConsts(network)
@@ -46,6 +45,7 @@ export const ManageFastUnstake = () => {
   const { nominate, transferrableBalance } = allTransferOptions
   const { totalUnlockChunks } = nominate
   const enoughForDeposit = transferrableBalance >= fastUnstakeDeposit
+  const { checked } = meta
 
   // valid to submit transaction
   const [valid, setValid] = useState<boolean>(false)
@@ -55,12 +55,12 @@ export const ManageFastUnstake = () => {
       erasToCheckPerBlock > 0 &&
         ((!isFastUnstaking &&
           enoughForDeposit &&
-          fastUnstakeStatus?.status === 'NOT_EXPOSED' &&
+          isExposed === false &&
           totalUnlockChunks === 0) ||
           isFastUnstaking)
     )
   }, [
-    fastUnstakeStatus?.status,
+    isExposed,
     erasToCheckPerBlock,
     totalUnlockChunks,
     isFastUnstaking,
@@ -69,10 +69,7 @@ export const ManageFastUnstake = () => {
     feeReserve,
   ])
 
-  useEffect(
-    () => setModalResize(),
-    [fastUnstakeStatus?.status, queueDeposit, isFastUnstaking]
-  )
+  useEffect(() => setModalResize(), [isExposed, queueDeposit, isFastUnstaking])
 
   const getTx = () => {
     let tx: SubmittableExtrinsic | undefined
@@ -125,10 +122,7 @@ export const ManageFastUnstake = () => {
   }
 
   // manage last exposed
-  const lastExposedAgo =
-    !exposed || !fastUnstakeStatus?.lastExposed
-      ? 0
-      : activeEra.index - fastUnstakeStatus.lastExposed
+  const lastExposedAgo = !isExposed ? 0 : activeEra.index - (checked[0] || 0)
   const erasRemaining = BigNumber.max(
     1,
     new BigNumber(bondDuration).minus(lastExposedAgo)
@@ -147,7 +141,7 @@ export const ManageFastUnstake = () => {
           </Warnings>
         ) : null}
 
-        {exposed ? (
+        {isExposed ? (
           <>
             <ActionItem
               text={t('fastUnstakeExposedAgo', {
@@ -191,7 +185,7 @@ export const ManageFastUnstake = () => {
           </>
         )}
       </Padding>
-      {!exposed ? (
+      {!isExposed ? (
         <SubmitTx
           requiresMigratedController
           valid={valid}

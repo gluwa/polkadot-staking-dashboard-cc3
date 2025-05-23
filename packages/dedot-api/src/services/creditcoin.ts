@@ -31,7 +31,6 @@ import { ActiveEraQuery } from '../subscribe/activeEra'
 import { ActivePoolQuery } from '../subscribe/activePool'
 import { BlockNumberQuery } from '../subscribe/blockNumber'
 import { EraRewardPointsQuery } from '../subscribe/eraRewardPoints'
-import { FastUnstakeConfigQuery } from '../subscribe/fastUnstakeConfig'
 import { FastUnstakeQueueQuery } from '../subscribe/fastUnstakeQueue'
 import { PoolsConfigQuery } from '../subscribe/poolsConfig'
 import { ProxiesQuery } from '../subscribe/proxies'
@@ -71,7 +70,6 @@ export class CreditcoinService
   poolsConfig: PoolsConfigQuery<PolkadotApi>
   stakingMetrics: StakingMetricsQuery<PolkadotApi>
   eraRewardPoints: EraRewardPointsQuery<PolkadotApi>
-  fastUnstakeConfig: FastUnstakeConfigQuery<PolkadotApi>
   fastUnstakeQueue: FastUnstakeQueueQuery<PolkadotApi>
 
   subActiveAddress: Subscription
@@ -118,7 +116,6 @@ export class CreditcoinService
     this.activeEra = new ActiveEraQuery(this.apiRelay)
     this.relayMetrics = new RelayMetricsQuery(this.apiRelay)
     this.poolsConfig = new PoolsConfigQuery(this.apiRelay)
-    this.fastUnstakeConfig = new FastUnstakeConfigQuery(this.apiRelay)
 
     this.subActiveEra = this.activeEra.activeEra$.subscribe(
       async ({ index }) => {
@@ -220,7 +217,6 @@ export class CreditcoinService
     this.blockNumber?.unsubscribe()
     this.relayMetrics?.unsubscribe()
     this.poolsConfig?.unsubscribe()
-    this.fastUnstakeConfig?.unsubscribe()
     this.activeEra?.unsubscribe()
     this.stakingMetrics?.unsubscribe()
     this.eraRewardPoints?.unsubscribe()

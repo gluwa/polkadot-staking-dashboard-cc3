@@ -27,3 +27,13 @@ export interface ProcessExposuresResponse {
   activeValidators: number
   who: MaybeAddress
 }
+
+export interface ProcessEraForExposureArgs {
+  era: string
+  maxExposurePageSize: string
+  exposures: Exposure[]
+  exitOnExposed: boolean
+  task: string
+  networkName: NetworkId
+  who: MaybeAddress
+}

@@ -7,15 +7,12 @@ import { shuffle } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
 import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
-import { usePlugins } from 'contexts/Plugins'
 import { useStaking } from 'contexts/Staking'
 import {
   getValidatorRank as getValidatorRankBus,
   getValidatorRanks,
 } from 'global-bus'
 import { useErasPerDay } from 'hooks/useErasPerDay'
-import { fetchActiveValidatorRanks } from 'plugin-staking-api'
-import type { ActiveValidatorRank } from 'plugin-staking-api/types'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import type {
@@ -43,7 +40,6 @@ export const [ValidatorsContext, useValidators] =
 export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useNetwork()
   const { activeEra } = useApi()
-  const { pluginEnabled } = usePlugins()
   const { stakers } = useStaking().eraStakers
   const { erasPerDay, maxSupportedDays } = useErasPerDay()
   const { isReady, getConsts, serviceApi } = useApi()
@@ -76,11 +72,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
 
   // Stores the average network commission rate
   const [avgCommission, setAvgCommission] = useState<number>(0)
-
-  // Stores active validator ranks
-  const [activeValidatorRanks, setActiveValidatorRanks] = useState<
-    ActiveValidatorRank[]
-  >([])
 
   // Average rerward rate
   const [averageEraValidatorReward, setAverageEraValidatorReward] = useState<{
@@ -300,47 +291,23 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     setAverageEraValidatorReward({ days, reward })
   }
 
-  const getActiveValidatorRanks = async (): Promise<void> => {
-    const result = await fetchActiveValidatorRanks(network)
-    setActiveValidatorRanks(result.activeValidatorRanks)
-  }
-
   const getValidatorRank = (validator: string): number | undefined => {
-    if (pluginEnabled('staking_api')) {
-      return activeValidatorRanks.find((r) => r.validator === validator)?.rank
-    } else {
-      const rank = getValidatorRankBus(validator)
-      if (!rank) {
-        return undefined
-      }
-      return rank
+    const rank = getValidatorRankBus(validator)
+    if (!rank) {
+      return undefined
     }
+    return rank
   }
 
   const getValidatorRankSegment = (validator: string): number => {
     const fallbackSegment = 100
-    if (pluginEnabled('staking_api')) {
-      const totalValidators = activeValidatorRanks.length
-      if (totalValidators === 0) {
-        return fallbackSegment
-      }
-      // Find the rank of the given validator
-      const rank = getValidatorRank(validator)
-      if (!rank) {
-        return fallbackSegment
-      }
-      const percentile = (rank / totalValidators) * 100
-      const segment = Math.ceil(percentile / 10) * 10
-      return segment
-    } else {
-      const rank = getValidatorRankBus(validator)
-      if (!rank) {
-        return fallbackSegment
-      }
-      const percentile = (rank / getValidatorRanks().length) * 100
-      const segment = Math.ceil(percentile / 10) * 10
-      return segment
+    const rank = getValidatorRankBus(validator)
+    if (!rank) {
+      return fallbackSegment
     }
+    const percentile = (rank / getValidatorRanks().length) * 100
+    const segment = Math.ceil(percentile / 10) * 10
+    return segment
   }
 
   // Reset validator state data on network change
@@ -355,13 +322,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     setValidatorSupers({})
     setAverageEraValidatorReward(defaultAverageEraValidatorReward)
   }, [network])
-
-  // Refetch active validator ranks when network changes
-  useEffect(() => {
-    if (pluginEnabled('staking_api')) {
-      getActiveValidatorRanks()
-    }
-  }, [network, pluginEnabled('staking_api')])
 
   // Fetch validators and era reward points when fetched status changes
   useEffect(() => {

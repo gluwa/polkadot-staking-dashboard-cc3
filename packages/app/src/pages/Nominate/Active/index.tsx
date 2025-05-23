@@ -48,7 +48,7 @@ export const Active = () => {
       </Stat.Row>
       <CommissionPrompt />
 
-      {!isFastUnstaking && <WithdrawPrompt bondFor="nominator" />}
+      <WithdrawPrompt bondFor="nominator" />
       <UnstakePrompts />
       <Page.Row>
         <Page.RowSection secondary vLast>

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
+import { useApi } from 'contexts/Api'
 import { useFastUnstake } from 'contexts/FastUnstake'
+import { useNetwork } from 'contexts/Network'
 import { useStaking } from 'contexts/Staking'
 import { useTransferOptions } from 'contexts/TransferOptions'
 import { useTranslation } from 'react-i18next'
@@ -11,11 +13,14 @@ import { useNominationStatus } from '../useNominationStatus'
 
 export const useUnstaking = () => {
   const { t } = useTranslation('app')
+  const { getConsts, activeEra } = useApi()
+  const { network } = useNetwork()
   const { inSetup } = useStaking()
   const { activeAddress } = useActiveAccounts()
   const { getTransferOptions } = useTransferOptions()
   const { getNominationStatus } = useNominationStatus()
-  const { head, queueDeposit, fastUnstakeStatus, exposed } = useFastUnstake()
+  const { checking, head, isExposed, queueDeposit, meta } = useFastUnstake()
+  const { bondDuration } = getConsts(network)
 
   const transferOptions = getTransferOptions(activeAddress).nominate
   const { nominees } = getNominationStatus(activeAddress, 'nominator')
@@ -32,9 +37,17 @@ export const useUnstaking = () => {
 
   // determine unstake button
   const getFastUnstakeText = () => {
-    if (exposed && fastUnstakeStatus?.lastExposed) {
+    const { checked } = meta
+    if (checking) {
+      return `${t('fastUnstakeCheckingEras', {
+        checked: checked.length,
+        total: bondDuration.toString(),
+      })}...`
+    }
+    if (isExposed) {
+      const lastExposed = activeEra.index - (checked[0] || 0)
       return t('fastUnstakeExposed', {
-        count: Number(fastUnstakeStatus.lastExposed),
+        count: lastExposed,
       })
     }
     if (registered) {

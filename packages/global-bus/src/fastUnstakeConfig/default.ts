@@ -1,12 +1,18 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { FastUnstakeConfig } from 'types'
+import type { FastUnstakeConfig, MetaInterface } from 'types'
+
+export const defaultMeta: MetaInterface = {
+  checked: [],
+}
 
 export const defaultFastUnstakeConfig: FastUnstakeConfig = {
-  head: {
-    stashes: [],
-    checked: [],
-  },
-  counterForQueue: 0,
+  getLocalkey: () => '',
+  checking: false,
+  meta: defaultMeta,
+  isExposed: null,
+  head: undefined,
+  queueDeposit: undefined,
+  counterForQueue: undefined,
 }
