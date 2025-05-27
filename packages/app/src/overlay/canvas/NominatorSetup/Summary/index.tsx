@@ -154,7 +154,7 @@ export const Summary = ({
             </section>
           ) : (
             <div style={{ padding: '1rem 0.5rem', width: '100%' }}>
-              <Separator transparent />
+              <Separator />
               <Bond section={4} inline={true} handleBondValid={setBondValid} />
             </div>
           )}

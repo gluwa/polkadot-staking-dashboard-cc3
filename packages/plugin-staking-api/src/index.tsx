@@ -4,11 +4,9 @@
 import { ApolloProvider } from '@apollo/client'
 
 export * from './Client'
-export * from './queries/nominatorRewardTrend'
 export * from './queries/poolCandidates'
 export * from './queries/poolEraPoints'
 export * from './queries/poolRewards'
-export * from './queries/poolRewardTrend'
 export * from './queries/rewards'
 export * from './queries/tokenPrice'
 export * from './queries/unclaimedRewards'

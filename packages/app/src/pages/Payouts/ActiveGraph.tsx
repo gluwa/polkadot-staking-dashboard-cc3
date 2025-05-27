@@ -1,12 +1,14 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
+import { MaxPayoutDays } from 'consts'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
 import { getUnixTime } from 'date-fns'
 import { AveragePayoutLine } from 'library/Graphs/AveragePayoutLine'
 import { PayoutBar } from 'library/Graphs/PayoutBar'
+import { removeNonZeroAmountAndSort } from 'library/Graphs/Utils'
 import { usePoolRewards, useRewards } from 'plugin-staking-api'
 import type {
   NominatorReward,
@@ -18,28 +20,22 @@ import { useEffect } from 'react'
 interface Props {
   nominating: boolean
   inPool: boolean
-  lineMarginTop: string
-  setLastReward: (reward: RewardResult | undefined) => void
+  setPayoutLists: (payouts: RewardResult[]) => void
 }
-export const ActiveGraph = ({
-  nominating,
-  inPool,
-  lineMarginTop,
-  setLastReward,
-}: Props) => {
+
+export const ActiveGraph = ({ nominating, inPool, setPayoutLists }: Props) => {
   const { activeEra } = useApi()
   const { network } = useNetwork()
   const { activeAccount } = useActiveAccounts()
 
-  const { data: nominatorRewardData, loading: rewardsLoading } = useRewards({
+  const { data: nominatorRewardsData, loading: rewardsLoading } = useRewards({
     network,
     who: activeAccount?.address || '',
     fromEra: Math.max(activeEra.index - 1, 0),
   })
 
-  const days = 30
   const fromDate = new Date()
-  fromDate.setDate(fromDate.getDate() - days)
+  fromDate.setDate(fromDate.getDate() - MaxPayoutDays)
   fromDate.setHours(0, 0, 0, 0)
 
   const { data: poolRewardsData, loading: poolRewardsLoading } = usePoolRewards(
@@ -50,45 +46,41 @@ export const ActiveGraph = ({
     }
   )
 
-  const nominatorRewards = nominatorRewardData?.allRewards ?? []
+  const allRewards = nominatorRewardsData?.allRewards ?? []
   const payouts =
-    nominatorRewards.filter(
-      (reward: NominatorReward) => reward.claimed === true
-    ) ?? []
+    allRewards.filter((reward: NominatorReward) => reward.claimed === true) ??
+    []
   const unclaimedPayouts =
-    nominatorRewards.filter(
-      (reward: NominatorReward) => reward.claimed === false
-    ) ?? []
-
+    allRewards.filter((reward: NominatorReward) => reward.claimed === false) ??
+    []
   const poolClaims = poolRewardsData?.poolRewards ?? []
-  const allRewards = (nominatorRewards as RewardResults)
-    .concat(poolClaims)
-    .sort((a, b) => b.timestamp - a.timestamp)
 
   useEffect(() => {
-    setLastReward(allRewards[0])
-  }, [JSON.stringify(allRewards[0])])
+    // filter zero rewards and order via timestamp, most recent first
+    const payoutsList = (allRewards as RewardResults).concat(
+      poolClaims
+    ) as RewardResults
+    setPayoutLists(removeNonZeroAmountAndSort(payoutsList))
+  }, [JSON.stringify(payouts), JSON.stringify(poolClaims)])
 
   return (
     <>
       <PayoutBar
-        days={days}
-        height="150px"
+        days={MaxPayoutDays}
+        height="165px"
         data={{ payouts, unclaimedPayouts, poolClaims }}
         nominating={nominating}
         inPool={inPool}
         syncing={rewardsLoading || poolRewardsLoading}
       />
-      <div style={{ marginTop: lineMarginTop }}>
-        <AveragePayoutLine
-          days={days}
-          average={10}
-          height="65px"
-          data={{ payouts, unclaimedPayouts, poolClaims }}
-          nominating={nominating}
-          inPool={inPool}
-        />
-      </div>
+      <AveragePayoutLine
+        days={MaxPayoutDays}
+        average={10}
+        height="65px"
+        data={{ payouts, unclaimedPayouts, poolClaims }}
+        nominating={nominating}
+        inPool={inPool}
+      />
     </>
   )
 }

@@ -22,11 +22,10 @@ export const Announcements = () => {
   const { bondedPools } = useBondedPools()
   const {
     poolsConfig: { counterForPoolMembers },
-    stakingMetrics: { totalStaked, lastReward },
+    stakingMetrics: { totalStaked },
   } = useApi()
 
   const { unit, units } = getNetworkData(network)
-  const lastRewardUnit = new BigNumber(planckToUnit(lastReward || 0, units))
 
   let totalPoolPoints = new BigNumber(0)
   bondedPools.forEach((b: BondedPool) => {
@@ -55,6 +54,8 @@ export const Announcements = () => {
 
   const announcements = []
 
+  const networkUnit = unit
+
   // Total staked on the network
   if (totalStaked > 0n) {
     announcements.push({
@@ -81,7 +82,7 @@ export const Announcements = () => {
       title: `${totalPoolPointsUnit.integerValue().toFormat()} ${unit} ${t(
         'inPools'
       )}`,
-      subtitle: `${t('bondedInPools', { networkUnit: unit })}`,
+      subtitle: `${t('bondedInPools', { networkUnit })}`,
     })
   } else {
     announcements.push(null)
@@ -93,17 +94,6 @@ export const Announcements = () => {
       class: 'neutral',
       title: `${new BigNumber(counterForPoolMembers).toFormat()} ${t('poolMembersBonding')}`,
       subtitle: `${t('totalNumAccounts')}`,
-    })
-  } else {
-    announcements.push(null)
-  }
-
-  // Last era payout
-  if (lastRewardUnit.isGreaterThan(0)) {
-    announcements.push({
-      class: 'neutral',
-      title: `${lastRewardUnit.integerValue().toFormat()} ${unit} ${t('paidOutLastEraTitle')}`,
-      subtitle: `${t('paidOutLastEraSubtitle')}`,
     })
   } else {
     announcements.push(null)

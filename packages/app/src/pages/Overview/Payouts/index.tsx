@@ -2,18 +2,17 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { useSize } from '@w3ux/hooks'
+import { Odometer } from '@w3ux/react-odometer'
+import { minDecimalPlaces } from '@w3ux/utils'
 import { getChainIcons } from 'assets'
 import BigNumber from 'bignumber.js'
 import { getNetworkData } from 'consts/util'
-import { useCurrency } from 'contexts/Currency'
 import { useNetwork } from 'contexts/Network'
-import { usePlugins } from 'contexts/Plugins'
 import { useActivePool } from 'contexts/Pools/ActivePool'
 import { useStaking } from 'contexts/Staking'
 import { useUi } from 'contexts/UI'
 import { formatDistance, fromUnixTime, getUnixTime } from 'date-fns'
 import { useSyncing } from 'hooks/useSyncing'
-import { Balance } from 'library/Balance'
 import { formatSize } from 'library/Graphs/Utils'
 import { GraphWrapper } from 'library/Graphs/Wrapper'
 import { StatusLabel } from 'library/StatusLabel'
@@ -21,7 +20,7 @@ import { DefaultLocale, locales } from 'locales'
 import type { RewardResult } from 'plugin-staking-api/types'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CardHeader } from 'ui-core/base'
+import { CardHeader, CardLabel } from 'ui-core/base'
 import { planckToUnitBn } from 'utils'
 import { ActiveGraph } from './ActiveGraph'
 import { InactiveGraph } from './InactiveGraph'
@@ -29,15 +28,13 @@ import { InactiveGraph } from './InactiveGraph'
 export const Payouts = () => {
   const { i18n, t } = useTranslation('pages')
   const { network } = useNetwork()
+  const Token = getChainIcons(network).token
+  const { units } = getNetworkData(network)
   const { inSetup } = useStaking()
   const { syncing } = useSyncing()
   const { containerRefs } = useUi()
   const { inPool } = useActivePool()
-  const { currency } = useCurrency()
-  const { pluginEnabled } = usePlugins()
 
-  const { units } = getNetworkData(network)
-  const Token = getChainIcons(network).token
   const staking = !inSetup() || inPool
   const notStaking = !syncing && !staking
 
@@ -63,41 +60,38 @@ export const Payouts = () => {
     }
   }
 
-  const lastRewardUnit = planckToUnitBn(
-    new BigNumber(lastReward?.reward || 0),
-    units
-  ).toNumber()
-
   return (
     <>
       <CardHeader>
-        <h4>{t('recentPayouts')}</h4>
-        <Balance.WithFiat
-          Token={<Token />}
-          value={lastRewardUnit}
-          currency={currency}
-          label={
-            lastReward === undefined
-              ? undefined
-              : formatDistance(formatFrom, formatTo, formatOpts)
-          }
-        />
+        <h4>{t('overview.recentPayouts')}</h4>
+        <h2>
+          <Token />
+          <Odometer
+            value={minDecimalPlaces(
+              lastReward === undefined
+                ? '0'
+                : planckToUnitBn(
+                    new BigNumber(lastReward?.reward || 0),
+                    units
+                  ).toFormat(),
+              2
+            )}
+          />
+          <CardLabel>
+            {lastReward === undefined ? (
+              ''
+            ) : (
+              <>&nbsp;{formatDistance(formatFrom, formatTo, formatOpts)}</>
+            )}
+          </CardLabel>
+        </h2>
       </CardHeader>
       <div className="inner" ref={graphInnerRef} style={{ minHeight }}>
-        {!pluginEnabled('staking_api') ? (
-          <StatusLabel
-            status="active_service"
-            statusFor="staking_api"
-            title={t('stakingApiDisabled')}
-            topOffset="37%"
-          />
-        ) : (
-          <StatusLabel
-            status="sync_or_setup"
-            title={t('notStaking')}
-            topOffset="37%"
-          />
-        )}
+        <StatusLabel
+          status="sync_or_setup"
+          title={t('overview.notStaking')}
+          topOffset="37%"
+        />
         <GraphWrapper
           style={{
             height: `${height}px`,
@@ -107,7 +101,7 @@ export const Payouts = () => {
             transition: 'opacity 0.5s',
           }}
         >
-          {staking && pluginEnabled('staking_api') ? (
+          {staking ? (
             <ActiveGraph
               nominating={!inSetup()}
               inPool={inPool()}

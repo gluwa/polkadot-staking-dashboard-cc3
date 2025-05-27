@@ -46,11 +46,9 @@ export const PayoutListInner = ({
   const { bondedPools } = useBondedPools()
   const { getValidators } = useValidators()
   const { getThemeValue } = useThemeValues()
-  const {
-    listFormat,
-    setListFormat,
-    pagination: { page, setPage },
-  } = useList()
+  const { listFormat, setListFormat } = useList()
+
+  const [page, setPage] = useState<number>(1)
   const { unit, units } = getNetworkData(network)
 
   // Manipulated list (ordering, filtering) of payouts
@@ -78,13 +76,7 @@ export const PayoutListInner = ({
 
   const listPayouts = payouts.slice(pageStart).slice(0, itemsPerPage)
   if (!listPayouts.length) {
-    return (
-      <ListWrapper>
-        <div>
-          <h3>{t('noRecentPayouts')}.</h3>
-        </div>
-      </ListWrapper>
-    )
+    return null
   }
 
   return (

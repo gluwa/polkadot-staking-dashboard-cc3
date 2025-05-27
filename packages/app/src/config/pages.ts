@@ -4,8 +4,8 @@
 import type { PageCategoryItems, PagesConfigItems } from 'common-types'
 import { Nominate } from 'pages/Nominate'
 import { Overview } from 'pages/Overview'
+import { Payouts } from 'pages/Payouts'
 import { Pools } from 'pages/Pools'
-import { Rewards } from 'pages/Rewards'
 import { Validators } from 'pages/Validators'
 
 export const PageCategories: PageCategoryItems = [
@@ -56,10 +56,10 @@ export const PagesConfig: PagesConfigItems = [
   },
   {
     category: 2,
-    key: 'rewards',
-    uri: `${import.meta.env.BASE_URL}rewards`,
-    hash: '/rewards',
-    Entry: Rewards,
+    key: 'payouts',
+    uri: `${import.meta.env.BASE_URL}payouts`,
+    hash: '/payouts',
+    Entry: Payouts,
     lottie: 'analytics',
     advanced: false,
   },

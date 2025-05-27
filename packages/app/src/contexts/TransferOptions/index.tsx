@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { createSafeContext, useEffectIgnoreInitial } from '@w3ux/hooks'
-import { maxBigInt, planckToUnit } from '@w3ux/utils'
-import BigNumber from 'bignumber.js'
+import { maxBigInt } from '@w3ux/utils'
 import { getNetworkData } from 'consts/util'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
@@ -125,36 +124,6 @@ export const TransferOptionsProvider = ({
     setFeeReserve(amount)
   }
 
-  // Gets staked balance, whether nominating or in pool, for an account
-  const getStakedBalance = (address: MaybeAddress) => {
-    const allTransferOptions = getTransferOptions(address)
-
-    // Total funds nominating
-    const nominating = planckToUnit(
-      allTransferOptions.nominate.active +
-        allTransferOptions.nominate.totalUnlocking +
-        allTransferOptions.nominate.totalUnlocked,
-      units
-    )
-
-    // Total funds in pool
-    const inPool = planckToUnit(
-      allTransferOptions.pool.active +
-        allTransferOptions.pool.totalUnlocking +
-        allTransferOptions.pool.totalUnlocked,
-      units
-    )
-
-    // Determine the actual staked balance
-    const nominatingBn = new BigNumber(nominating)
-    const inPoolBn = new BigNumber(inPool)
-    return !nominatingBn.isZero()
-      ? nominatingBn
-      : !inPoolBn.isZero()
-        ? inPoolBn
-        : new BigNumber(0)
-  }
-
   // Gets a fee reserve value from local storage for an account, or the default value otherwise
   const getFeeReserve = (address: MaybeAddress): bigint =>
     getLocalFeeReserve(address, defaultFeeReserve, { network, units })
@@ -170,7 +139,6 @@ export const TransferOptionsProvider = ({
     <TransferOptionsContext.Provider
       value={{
         getTransferOptions,
-        getStakedBalance,
         setFeeReserveBalance,
         feeReserve,
         getFeeReserve,

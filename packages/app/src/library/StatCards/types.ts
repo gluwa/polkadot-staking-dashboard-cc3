@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { TimeLeftFormatted } from '@w3ux/types'
-import type { ReactNode } from 'react'
 
 export interface NumberProps {
   label: string
   value: number
   decimals?: number
   unit: string
-  helpKey?: string
+  helpKey: string
 }
 
 export interface PieProps {
@@ -21,24 +20,15 @@ export interface PieProps {
   }
   pieValue: number
   tooltip?: string
-  helpKey?: string
+  helpKey: string
 }
 
 export interface TextProps {
   primary?: boolean
   label: string
   value: string
+  secondaryValue?: string
   helpKey?: string
-}
-
-export interface TickerProps {
-  primary?: boolean
-  label: string
-  value: string
-  helpKey?: string
-  direction?: 'up' | 'down'
-  unit: string
-  changePercent: string
 }
 
 export interface TimeleftProps {
@@ -50,11 +40,4 @@ export interface TimeleftProps {
   }
   tooltip?: string
   helpKey?: string
-}
-
-export interface ButtonProps {
-  Icon: ReactNode
-  label: string
-  title: string
-  onClick: () => void
 }
