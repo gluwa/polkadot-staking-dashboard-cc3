@@ -8,7 +8,7 @@ import { getChainIcons } from 'assets'
 import BigNumber from 'bignumber.js'
 import { getNetworkData } from 'consts/util'
 import { useNetwork } from 'contexts/Network'
-import { useActivePool } from 'contexts/Pools/ActivePool'
+import { usePlugins } from 'contexts/Plugins'
 import { useStaking } from 'contexts/Staking'
 import { useUi } from 'contexts/UI'
 import { formatDistance, fromUnixTime, getUnixTime } from 'date-fns'
@@ -34,7 +34,6 @@ export const Payouts = () => {
   const { syncing } = useSyncing()
   const { plugins } = usePlugins()
   const { containerRefs } = useUi()
-  const { inPool } = useActivePool()
   const { getData, injectBlockTimestamp } = useSubscanData([
     'payouts',
     'unclaimedPayouts',

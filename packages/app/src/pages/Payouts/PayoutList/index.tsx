@@ -42,7 +42,7 @@ export const PayoutListInner = ({
   const { bondedPools } = useBondedPools()
   const { getThemeValue } = useThemeValues()
   const { listFormat, setListFormat } = useList()
-  const { validators } = useValidators()
+  const { getValidators } = useValidators()
 
   const [page, setPage] = useState<number>(1)
   const { unit, units } = getNetworkData(network)
@@ -130,15 +130,15 @@ export const PayoutListInner = ({
                   : undefined
 
             // get validator if it exists
-            const validator = validators.find(
-              (v) => v.address === p.validator_stash
+            const validator = getValidators().find(
+              (v: { address: AnyApi }) => v.address === p.validator_stash
             )
 
             // get pool if it exists
             const pool = bondedPools.find(({ id }) => id === p.pool_id)
 
             const batchIndex = validator
-              ? validators.indexOf(validator)
+              ? getValidators().indexOf(validator)
               : pool
                 ? bondedPools.indexOf(pool)
                 : 0

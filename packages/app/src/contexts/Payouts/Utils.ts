@@ -1,9 +1,9 @@
 // Copyright 2024 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { AnyJson } from '@w3ux/types'
+import type { AnyJson } from 'types'
 import BigNumber from 'bignumber.js'
-import type { NetworkId } from 'common-types'
+import type { NetworkId } from 'types'
 import type { LocalValidatorExposure } from './types'
 
 // Check if local exposure entry exists for an era.

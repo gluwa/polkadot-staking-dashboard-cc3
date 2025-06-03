@@ -3,7 +3,11 @@
 
 import type { LegacyClient } from 'dedot'
 import type { Unsub } from 'dedot/types'
-import { defaultFastUnstakeConfig, defaultMeta, setFastUnstakeConfig } from 'global-bus'
+import {
+  defaultFastUnstakeConfig,
+  defaultMeta,
+  setFastUnstakeConfig,
+} from 'global-bus'
 import type { FastUnstakeConfig } from 'types'
 import type { StakingChain } from '../types'
 

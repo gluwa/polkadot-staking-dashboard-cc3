@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { useSize } from '@w3ux/hooks'
-import type { PageProps } from 'common-types'
+import type { AnyApi, PageProps } from 'common-types'
 import { MaxPayoutDays } from 'consts'
 import { useHelp } from 'contexts/Help'
 import { usePlugins } from 'contexts/Plugins'
-import { useActivePool } from 'contexts/Pools/ActivePool'
 import { useStaking } from 'contexts/Staking'
 import { useUi } from 'contexts/UI'
 import { Subscan } from 'controllers/Subscan'
@@ -33,7 +32,6 @@ export const Payouts = ({ page: { key } }: PageProps) => {
   const { inSetup } = useStaking()
   const { syncing } = useSyncing()
   const { containerRefs } = useUi()
-  const { inPool } = useActivePool()
   const { plugins } = usePlugins()
   const { getData, injectBlockTimestamp } = useSubscanData([
     'payouts',
@@ -124,7 +122,12 @@ export const Payouts = ({ page: { key } }: PageProps) => {
                   transition: 'opacity 0.5s',
                 }}
               >
-                <PayoutBar days={MaxPayoutDays} height="165px" data={data} />
+                <PayoutBar
+                  days={MaxPayoutDays}
+                  height="165px"
+                  data={data}
+                  syncing
+                />
                 <PayoutLine
                   days={MaxPayoutDays}
                   average={10}
@@ -143,7 +146,6 @@ export const Payouts = ({ page: { key } }: PageProps) => {
               title={t('payouts.recentPayouts', { ns: 'pages' })}
               payouts={payoutsList}
               pagination
-              itemsPerPage={50}
             />
           </CardWrapper>
         </Page.Row>

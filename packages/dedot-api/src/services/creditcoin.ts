@@ -249,6 +249,14 @@ export class CreditcoinService
       validatorEntries: async () => await query.validatorEntries(this.apiRelay),
       validatorsMulti: async (addresses) =>
         await query.validatorsMulti(this.apiRelay, addresses),
+      claimedRewards: async (era, address) =>
+        await query.claimedRewards(this.apiRelay, address, era),
+      eraRewardPoints: async (era) =>
+        await query.eraRewardPoints(this.apiRelay, era),
+      erasValidatorPrefs: async (era, address) =>
+        await query.erasValidatorPrefs(this.apiRelay, era, address),
+      bondedMulti: async (addresses) =>
+        await query.bondedMulti(this.apiRelay, addresses),
     },
     runtimeApi: {
       balanceToPoints: async (poolId, amount) =>

@@ -17,6 +17,10 @@ export const defaultServiceInterface: CreditcoinServiceInterface = {
     sessionValidators: async () => [],
     validatorEntries: async () => [],
     validatorsMulti: async () => [],
+    claimedRewards: async () => [],
+    bondedMulti: async () => [],
+    eraRewardPoints: async () => undefined,
+    erasValidatorPrefs: async () => undefined,
   },
   runtimeApi: {
     balanceToPoints: async () => BigInt(0),

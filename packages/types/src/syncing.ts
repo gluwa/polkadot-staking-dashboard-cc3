@@ -6,6 +6,7 @@ export type SyncId =
   | 'era-stakers'
   | 'bonded-pools'
   | 'active-pools'
+  | 'balances'
 
 export type SyncStatus = 'syncing' | 'complete'
 

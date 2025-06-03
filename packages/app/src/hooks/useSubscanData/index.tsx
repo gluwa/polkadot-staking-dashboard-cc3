@@ -40,7 +40,7 @@ export const useSubscanData = (keys: PayoutType[]) => {
         receivedKeys
           .filter((key) => keys.includes(key))
           .forEach((key) => {
-            newData[key] = Subscan.payoutData[activeAccount]?.[key] || []
+            newData[key] = Subscan.payoutData[activeAccount.address]?.[key] || []
           })
 
         setStateWithRef({ ...dataRef.current, ...newData }, setData, dataRef)
@@ -75,10 +75,7 @@ export const useSubscanData = (keys: PayoutType[]) => {
       return entries
     }
     entries.forEach((p) => {
-      p.block_timestamp = activeEra.start
-        .multipliedBy(0.001)
-        .minus(erasToSeconds(activeEra.index.minus(p.era).minus(1)))
-        .toNumber()
+      p.block_timestamp = (Number(activeEra.start) * 0.001) - erasToSeconds(activeEra.index- p.era - 1)
     })
     return entries
   }
@@ -89,7 +86,7 @@ export const useSubscanData = (keys: PayoutType[]) => {
     if (activeAccount) {
       const newData: SubscanData = {}
       keys.forEach((key: PayoutType) => {
-        newData[key] = Subscan.payoutData[activeAccount]?.[key] || []
+        newData[key] = Subscan.payoutData[activeAccount.address]?.[key] || []
       })
       setStateWithRef({ ...dataRef.current, ...newData }, setData, dataRef)
     }

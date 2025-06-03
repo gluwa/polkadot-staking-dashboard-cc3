@@ -11,6 +11,5 @@ export * from './queries/tokenPrice'
 export * from './queries/validatorEraPoints'
 export * from './queries/validatorEraPointsBatch'
 export * from './queries/validatorRewards'
-export * from './util'
 
 export { ApolloProvider }

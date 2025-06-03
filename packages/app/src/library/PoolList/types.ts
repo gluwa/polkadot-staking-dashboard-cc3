@@ -10,3 +10,5 @@ export interface PoolListProps {
   pools?: BondedPool[]
   itemsPerPage?: number
 }
+
+export type ListFormat = 'row' | 'col'

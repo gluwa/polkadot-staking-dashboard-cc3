@@ -1,7 +1,6 @@
 // Copyright 2024 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { AnyJson } from '@w3ux/types'
 import BigNumber from 'bignumber.js'
 import {
   CategoryScale,
@@ -14,15 +13,18 @@ import {
   Tooltip,
 } from 'chart.js'
 import type { AnyApi } from 'common-types'
+import { getNetworkData } from 'consts/util'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useBalances } from 'contexts/Balances'
 import { useNetwork } from 'contexts/Network'
 import { useStaking } from 'contexts/Staking'
 import { useTheme } from 'contexts/Themes'
+import { useThemeValues } from 'contexts/ThemeValues'
 import { useSyncing } from 'hooks/useSyncing'
 import { Line } from 'react-chartjs-2'
 import { useTranslation } from 'react-i18next'
 import graphColors from 'styles/graphs/index.json'
+import type { AnyJson } from 'types'
 import type { PayoutLineProps } from './types'
 import {
   calculatePayoutAverages,
@@ -46,13 +48,15 @@ export const PayoutLine = ({
   data: { payouts, poolClaims },
 }: PayoutLineProps) => {
   const { t } = useTranslation('library')
+  const { getThemeValue } = useThemeValues()
   const { mode } = useTheme()
   const { inSetup } = useStaking()
   const { syncing } = useSyncing(['balances'])
   const { getPoolMembership } = useBalances()
   const { activeAccount } = useActiveAccounts()
 
-  const { unit, units, colors } = useNetwork().networkData
+  const { network } = useNetwork()
+  const { unit, units } = getNetworkData(network)
   const poolMembership = getPoolMembership(activeAccount)
   const notStaking = !syncing && inSetup() && !poolMembership
   const inPoolOnly = !syncing && inSetup() && !!poolMembership
@@ -89,10 +93,10 @@ export const PayoutLine = ({
 
   // determine color for payouts
   const color = notStaking
-    ? colors.primary[mode]
+    ? getThemeValue('--accent-color-primary')
     : !inPoolOnly
-      ? colors.primary[mode]
-      : colors.secondary[mode]
+      ? getThemeValue('--accent-color-primary')
+      : getThemeValue('--accent-color-secondary')
 
   // configure graph options
   const options = {

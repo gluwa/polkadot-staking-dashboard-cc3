@@ -1,13 +1,8 @@
 // Copyright 2024 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { AnyJson, Sync } from '@w3ux/types'
+import type { Sync } from '@w3ux/types'
 import { setStateWithRef } from '@w3ux/utils'
-import { ClaimedRewards } from 'api/query/claimedRewards'
-import { ErasRewardPoints } from 'api/query/erasRewardPoints'
-import { ErasValidatorReward } from 'api/query/erasValidatorReward'
-import { ValidatorPrefs } from 'api/query/validatorPrefs'
-import { BondedMulti } from 'api/queryMulti/bondedMulti'
 import BigNumber from 'bignumber.js'
 import type { AnyApi } from 'common-types'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
@@ -16,6 +11,7 @@ import { useNetwork } from 'contexts/Network'
 import { useStaking } from 'contexts/Staking'
 import type { ReactNode } from 'react'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import type { AnyJson } from 'types'
 import { perbillToPercent } from 'utils'
 import Worker from 'workers/stakers?worker'
 import { MaxSupportedPayoutEras, defaultPayoutsContext } from './defaults'
@@ -41,10 +37,10 @@ export const usePayouts = () => useContext(PayoutsContext)
 
 export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useNetwork()
-  const { consts, activeEra } = useApi()
+  const { activeEra, serviceApi, getConsts } = useApi()
   const { activeAccount } = useActiveAccounts()
   const { isNominating, fetchEraStakers } = useStaking()
-  const { maxExposurePageSize } = consts
+  const { maxExposurePageSize } = getConsts(network)
 
   // Store active accont's payout state.
   const [unclaimedPayouts, setUnclaimedPayouts] =
@@ -58,7 +54,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
   const getErasInterval = () => {
     const startEra = activeEra?.index - 1 || new BigNumber(1)
     const endEra = BigNumber.max(
-      startEra as number - MaxSupportedPayoutEras + 1,
+      (startEra as number) - MaxSupportedPayoutEras + 1,
       1
     )
     return {
@@ -153,11 +149,15 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
     let currentEra = startEra
     while (currentEra >= endEra) {
       const validators = Object.keys(
-        getLocalEraExposure(network, currentEra.toString(), activeAccount.address)
+        getLocalEraExposure(
+          network,
+          currentEra.toString(),
+          activeAccount.address
+        )
       )
       erasValidators.push(...validators)
       erasToCheck.push(currentEra.toString())
-      currentEra = currentEra as number - 1
+      currentEra = (currentEra as number) - 1
     }
 
     // Ensure no validator duplicates.
@@ -169,11 +169,8 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
     )
 
     // Fetch controllers in order to query ledgers.
-    const uniqueValidatorsMulti: [string][] = uniqueValidators.map((v) => [v])
-    const bondedResultsMulti = await new BondedMulti(
-      network,
-      uniqueValidatorsMulti
-    ).fetch()
+    const bondedResultsMulti =
+      await serviceApi.query.bondedMulti(uniqueValidators)
 
     const validatorControllers: Record<string, string> = {}
     for (let i = 0; i < bondedResultsMulti.length; i++) {
@@ -196,7 +193,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
 
     const results = await Promise.all(
       unclaimedRewardsEntries.map(([era, v]) =>
-        new ClaimedRewards(network, Number(era), v).fetch()
+        serviceApi.query.claimedRewards(Number(era), v)
       )
     )
 
@@ -242,10 +239,10 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       if (validators.length > 0) {
         calls.push(
           Promise.all([
-            new ErasValidatorReward(network, Number(era)).fetch(),
-            new ErasRewardPoints(network, Number(era)).fetch(),
+            serviceApi.query.erasValidatorRewardMulti([Number(era)]),
+            serviceApi.query.eraRewardPoints(Number(era)),
             ...validators.map((validator: AnyJson) =>
-              new ValidatorPrefs(network, Number(era), validator).fetch()
+              serviceApi.query.erasValidatorPrefs(Number(era), validator)
             ),
           ])
         )
@@ -387,7 +384,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       ) {
         setStateWithRef('syncing', setPayoutsSynced, payoutsSyncedRef)
         // Start checking eras for exposures, starting with the previous one.
-        checkEra(activeEra.index - 1)
+        checkEra(new BigNumber(activeEra.index - 1))
       }
     }
   }, [unclaimedPayouts, isNominating(), activeEra, payoutsSynced])

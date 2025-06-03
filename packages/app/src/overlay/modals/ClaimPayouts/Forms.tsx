@@ -6,7 +6,6 @@ import { planckToUnit } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
 import { getNetworkData } from 'consts/util'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
-import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
 import { usePayouts } from 'contexts/Payouts'
 import { Subscan } from 'controllers/Subscan'
@@ -32,7 +31,6 @@ export const Forms = forwardRef(
   ) => {
     const { t } = useTranslation('modals')
     const { network } = useNetwork()
-    const { serviceApi } = useApi()
     const { newBatchCall } = useBatchCall()
     const { setModalStatus } = useOverlay().modal
     const { activeAddress } = useActiveAccounts()
@@ -107,7 +105,7 @@ export const Forms = forwardRef(
           payouts.forEach(({ era }) => {
             eraPayouts.push(String(era))
           })
-          Subscan.removeUnclaimedPayouts(activeAccount, eraPayouts)
+          Subscan.removeUnclaimedPayouts(activeAddress, eraPayouts)
 
           // Deduct from `unclaimedPayouts` in Payouts context.
           payouts.forEach(({ era, paginatedValidators }) => {

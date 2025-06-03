@@ -3,6 +3,7 @@
 
 import BigNumber from 'bignumber.js'
 import { MaxPayoutDays } from 'consts'
+import type { SubscanPayout } from 'controllers/Subscan/types'
 import {
   addDays,
   differenceInDays,
@@ -12,34 +13,25 @@ import {
   startOfDay,
   subDays,
 } from 'date-fns'
-import type {
-  PoolReward,
-  RewardResult,
-  RewardResults,
-} from 'plugin-staking-api/types'
 import type { AnyJson } from 'types'
 import { planckToUnitBn } from 'utils'
 import type { PayoutDayCursor } from './types'
-
-type RewardRecord = {
-  reward: string
-  timestamp: number
-}
+import { AnyApi } from 'common-types'
 
 // Given payouts, calculate daily income and fill missing days with zero rewards
 export const calculateDailyPayouts = (
-  payouts: RewardResults,
+  payouts: AnyApi,
   fromDate: Date,
   maxDays: number,
   units: number,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   subject: 'pools' | 'nominate'
 ) => {
-  let dailyPayouts: RewardRecord[] = []
+  let dailyPayouts: AnyApi[] = []
 
   // Remove days that are beyond end day limit
   payouts = payouts.filter(
-    (p: RewardResult) =>
+    (p: AnyApi) =>
       daysPassed(fromUnixTime(p.block_timestamp), fromDate) <= maxDays
   )
 
@@ -124,7 +116,7 @@ export const calculateDailyPayouts = (
   }
 
   // Return payout rewards as plain numbers
-  const result: RewardRecord[] = []
+  const result: AnyApi[] = []
   for (const payout of dailyPayouts) {
     result.push({
       amount: payout.amount.toString(),
@@ -191,9 +183,9 @@ export const formatRewardsForGraphs = (
   fromDate: Date,
   days: number,
   units: number,
-  payouts: NominatorReward[],
-  poolClaims: PoolReward[],
-  unclaimedPayouts: NominatorReward[]
+  payouts: SubscanPayout[] | undefined,
+  poolClaims: SubscanPayout[] | undefined,
+  unclaimedPayouts: SubscanPayout[] | undefined
 ) => {
   // Set the from date to the start of the next day
   fromDate.setDate(fromDate.getDate() + 1)
@@ -232,7 +224,7 @@ export const formatRewardsForGraphs = (
 //
 // Calls the relevant functions on raw payouts to format them correctly
 const processPayouts = (
-  payouts: RewardResults,
+  payouts: SubscanPayout[] | undefined,
   fromDate: Date,
   days: number,
   units: number,
@@ -243,8 +235,6 @@ const processPayouts = (
 
   // Calculate payouts per day from the current day
   let p = calculateDailyPayouts(normalised, fromDate, days, units, subject)
-  // Ensure payouts don't go beyond end of current day
-  p = p.filter(({ timestamp }) => timestamp < getUnixTime(fromDate))
   // Pre-fill payouts if max days have not been reached
   p = p.concat(prefillMissingDays(p, fromDate, days))
   // Fill in gap days between payouts with zero values
@@ -271,8 +261,6 @@ const processPayouts = (
     units,
     subject
   )
-  // Ensure averages don't go beyond end of current day
-  a = a.filter(({ timestamp }) => timestamp < getUnixTime(fromDate))
   // Prefill payouts if we are missing the earlier dates
   a = a.concat(prefillMissingDays(a, averageFromDate, avgDays))
   // Fill in gap days between payouts with zero values
@@ -288,14 +276,14 @@ const processPayouts = (
 // These payouts are used for calculating the `avgDays`-day average prior to the start of the payout
 // graph
 const getPreMaxDaysPayouts = (
-  payouts: RewardResults,
+  payouts: AnyApi,
   fromDate: Date,
   days: number,
   avgDays: number
 ) =>
   // Remove payouts that are not within `avgDays` `days` pre-graph window
   payouts.filter(
-    (p: RewardResult) =>
+    (p: AnyApi) =>
       daysPassed(fromUnixTime(p.block_timestamp), fromDate) > days &&
       daysPassed(fromUnixTime(p.block_timestamp), fromDate) <= days + avgDays
   )
@@ -303,8 +291,8 @@ const getPreMaxDaysPayouts = (
 //
 // Combines payouts and pool claims into daily records
 export const combineRewards = (
-  payouts: RewardRecord[],
-  poolClaims: RewardRecord[]
+  payouts: AnyApi[],
+  poolClaims: AnyApi[]
 ) => {
   // we first check if actual payouts exist, e.g. there are non-zero payout
   // amounts present in either payouts or pool claims.
@@ -355,7 +343,7 @@ export const combineRewards = (
   // Iterate payout days.
   //
   // Combine payouts into one unified `rewards` array
-  const rewards: RewardRecord[] = []
+  const rewards: AnyApi[] = []
 
   // Loop pool claims and consume / combine payouts
   payoutDays.forEach((d) => {
@@ -386,15 +374,12 @@ export const combineRewards = (
 // Get latest reward
 //
 // Gets the latest reward from pool claims and nominator payouts
-export const getLatestReward = (
-  payouts: NominatorReward[],
-  poolClaims: PoolReward[]
-) => {
+export const getLatestReward = (payouts: AnyApi, poolClaims: AnyApi) => {
   // Get most recent payout
   const payoutExists =
-    payouts.find((p) => new BigNumber(p.amount).isGreaterThan(0)) ?? null
+    payouts.find((p: AnyApi) => new BigNumber(p.amount).isGreaterThan(0)) ?? null
   const poolClaimExists =
-    poolClaims.find((p) => new BigNumber(p.amount).isGreaterThan(0)) ?? null
+    poolClaims.find((p: AnyApi) => new BigNumber(p.amount).isGreaterThan(0)) ?? null
 
   // Calculate which payout was most recent
   let lastReward = null
@@ -419,10 +404,10 @@ export const getLatestReward = (
 //
 // Takes the last (earliest) payout and fills the missing days from that payout day to `maxDays`
 export const prefillMissingDays = (
-  payouts: RewardRecord[],
+  payouts: AnyApi[],
   fromDate: Date,
   maxDays: number
-): RewardResults => {
+): AnyApi => {
   const newPayouts = []
   const payoutStartDay = subDays(startOfDay(fromDate), maxDays)
   const payoutEndDay = !payouts.length
@@ -449,10 +434,10 @@ export const prefillMissingDays = (
 //
 // Takes the first payout (most recent) and fills the missing days from current day
 export const postFillMissingDays = (
-  payouts: RewardResults,
+  payouts: AnyApi,
   fromDate: Date,
   maxDays: number
-): RewardResults => {
+): AnyApi => {
   const newPayouts = []
   const payoutsEndDay = startOfDay(fromUnixTime(payouts[0].block_timestamp))
   const daysSinceLast = Math.min(
@@ -473,8 +458,8 @@ export const postFillMissingDays = (
 }
 
 // Fill gap days within payouts with zero amounts
-export const fillGapDays = (payouts: RewardRecord[], fromDate: Date) => {
-  const finalPayouts: RewardRecord[] = []
+export const fillGapDays = (payouts: AnyApi[], fromDate: Date) => {
+  const finalPayouts: AnyApi[] = []
 
   // Current day cursor
   let curDay = fromDate
@@ -506,11 +491,14 @@ export const fillGapDays = (payouts: RewardRecord[], fromDate: Date) => {
 }
 
 // Utiltiy: normalise payout timestamps to start of day
-export const normalisePayouts = (payouts: RewardResults): RewardResults =>
-  payouts.map((p) => ({
-    ...p,
-    block_timestamp: getUnixTime(startOfDay(fromUnixTime(p.block_timestamp))),
-  }))
+export const normalisePayouts = (payouts: SubscanPayout[] | undefined): AnyApi => {
+  if (payouts) {
+    payouts.map((p) => ({
+      ...p,
+      block_timestamp: getUnixTime(startOfDay(fromUnixTime(p.block_timestamp))),
+    }))
+  }
+}
 
 // Utility: days passed since 2 dates
 export const daysPassed = (from: Date, to: Date) =>

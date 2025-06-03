@@ -104,8 +104,3 @@ export type PoolCandidatesResult = Query & {
     poolCandidates: number[]
   }
 }
-
-export type PayoutsAndClaims = (NominatorReward | PoolReward)[]
-
-export type RewardResult = NominatorReward | PoolReward
-export type RewardResults = RewardResult[]

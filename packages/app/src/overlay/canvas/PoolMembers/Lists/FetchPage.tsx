@@ -54,7 +54,6 @@ export const MembersListInner = ({
       const newMembers = (await Subscan.handleFetchPoolMembers(
         poolId,
         page,
-        itemsPerPage
       )) as PoolMember[]
 
       fetchingMemberList.current = false

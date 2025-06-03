@@ -5,6 +5,7 @@ import type { ExtraSignedExtension, SubmittableExtrinsic } from 'dedot'
 import type {
   PalletNominationPoolsPoolMember,
   PalletNominationPoolsPoolState,
+  PalletStakingEraRewardPoints,
   PalletStakingRewardDestination,
   PalletStakingValidatorPrefs,
 } from 'dedot/chaintypes'
@@ -44,6 +45,13 @@ export interface CreditcoinServiceInterface {
     validatorsMulti: (
       addresses: string[]
     ) => Promise<PalletStakingValidatorPrefs[]>
+    claimedRewards: (era: number, address: string) => Promise<number[]>
+    eraRewardPoints: (era: number) => Promise<PalletStakingEraRewardPoints | undefined>
+    erasValidatorPrefs: (
+      era: number,
+      address: string
+    ) => Promise<PalletStakingValidatorPrefs | undefined>
+    bondedMulti: (addresses: string[]) => Promise<(string | undefined)[]>
   }
   runtimeApi: {
     balanceToPoints: (poolId: number, amount: bigint) => Promise<bigint>

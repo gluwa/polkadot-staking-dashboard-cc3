@@ -26,7 +26,6 @@ import { useTranslation } from 'react-i18next'
 import { ButtonHelp } from 'ui-buttons'
 import { GraphInner, Subheading } from 'ui-core/canvas'
 import type { OverviewSectionProps } from '../../types'
-import { ActiveGraph } from './ActiveGraph'
 import { InactiveGraph } from './InactiveGraph'
 
 ChartJS.register(
