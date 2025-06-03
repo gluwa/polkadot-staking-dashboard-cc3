@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { PagesConfig } from 'config/pages'
-import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useNetwork } from 'contexts/Network'
 import { useUi } from 'contexts/UI'
 import { useAccountFromUrl } from 'hooks/useAccountFromUrl'
@@ -30,14 +29,12 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
-import { StakingApi } from 'StakingApi'
 import { Page } from 'ui-core/base'
 
 const RouterInner = () => {
   const navigate = useNavigate()
   const { network } = useNetwork()
   const { pathname } = useLocation()
-  const { activeAddress } = useActiveAccounts()
   const { setContainerRefs, advancedMode } = useUi()
 
   // References to outer container
@@ -66,7 +63,6 @@ const RouterInner = () => {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallbackApp}>
       <ApolloProvider client={client}>
-        {activeAddress && <StakingApi activeAccount={activeAddress} />}
         <NotificationPrompts />
         <Page.Body>
           <Help />

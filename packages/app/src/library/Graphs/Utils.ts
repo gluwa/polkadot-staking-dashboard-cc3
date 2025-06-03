@@ -3,11 +3,9 @@
 
 import BigNumber from 'bignumber.js'
 import { MaxPayoutDays } from 'consts'
-import type { Locale } from 'date-fns'
 import {
   addDays,
   differenceInDays,
-  format,
   fromUnixTime,
   getUnixTime,
   isSameDay,
@@ -15,7 +13,6 @@ import {
   subDays,
 } from 'date-fns'
 import type {
-  NominatorReward,
   PoolReward,
   RewardResult,
   RewardResults,
@@ -43,7 +40,7 @@ export const calculateDailyPayouts = (
   // Remove days that are beyond end day limit
   payouts = payouts.filter(
     (p: RewardResult) =>
-      daysPassed(fromUnixTime(p.timestamp), fromDate) <= maxDays
+      daysPassed(fromUnixTime(p.block_timestamp), fromDate) <= maxDays
   )
 
   // Return now if no payouts
@@ -62,13 +59,14 @@ export const calculateDailyPayouts = (
   let curDay: Date = fromDate
   // Current payout cursor
   let curPayout: PayoutDayCursor = {
-    reward: new BigNumber(0),
+    amount: new BigNumber(0),
+    event_id: '',
   }
   for (const payout of payouts) {
     p++
 
     // Extract day from current payout
-    const thisDay = startOfDay(fromUnixTime(payout.timestamp))
+    const thisDay = startOfDay(fromUnixTime(payout.block_timestamp))
 
     // Initialise current day if first payout
     if (p === 1) {
@@ -78,8 +76,9 @@ export const calculateDailyPayouts = (
     // Handle surpassed maximum days
     if (daysPassed(thisDay, fromDate) >= maxDays) {
       dailyPayouts.push({
-        reward: planckToUnitBn(curPayout.reward, units).toString(),
-        timestamp: getUnixTime(curDay),
+        amount: planckToUnitBn(curPayout.amount, units),
+        event_id: getEventId(curPayout),
+        block_timestamp: getUnixTime(curDay),
       })
       break
     }
@@ -91,29 +90,34 @@ export const calculateDailyPayouts = (
     if (daysDiff > 0) {
       // Add current payout cursor to dailyPayouts
       dailyPayouts.push({
-        reward: planckToUnitBn(curPayout.reward, units).toString(),
-        timestamp: getUnixTime(curDay),
+        amount: planckToUnitBn(curPayout.amount, units),
+        event_id: getEventId(curPayout),
+        block_timestamp: getUnixTime(curDay),
       })
 
       // Update day cursor to the new day
       curDay = thisDay
       // Reset current payout cursor for the new day
       curPayout = {
-        reward: new BigNumber(payout.reward),
+        amount: new BigNumber(payout.amount),
+        event_id: new BigNumber(payout.amount).isLessThan(0)
+          ? 'Slash'
+          : 'Reward',
       }
     } else {
       // in same day. Aadd payout reward to current payout cursor
-      curPayout.reward = curPayout.reward.plus(payout.reward)
+      curPayout.amount = curPayout.amount.plus(payout.reward)
     }
 
     // If only 1 payout exists, or at the last unresolved payout, exit here
     if (
       payouts.length === 1 ||
-      (p === payouts.length && !curPayout.reward.isZero())
+      (p === payouts.length && !curPayout.amount.isZero())
     ) {
       dailyPayouts.push({
-        reward: planckToUnitBn(curPayout.reward, units).toString(),
-        timestamp: getUnixTime(curDay),
+        amount: planckToUnitBn(curPayout.amount, units),
+        event_id: getEventId(curPayout),
+        block_timestamp: getUnixTime(curDay),
       })
       break
     }
@@ -123,8 +127,8 @@ export const calculateDailyPayouts = (
   const result: RewardRecord[] = []
   for (const payout of dailyPayouts) {
     result.push({
-      reward: payout.reward.toString(),
-      timestamp: payout.timestamp,
+      amount: payout.amount.toString(),
+      block_timestamp: payout.block_timestamp,
     })
   }
 
@@ -143,45 +147,38 @@ export const calculatePayoutAverages = (
     return payouts
   }
 
-  // Create moving average value over `avgDays` past days, if any
-  let payoutsAverages: { reward: number; timestamp: number }[] = []
+  // create moving average value over `avgDays` past days, if any.
+  let payoutsAverages = []
   for (let i = 0; i < payouts.length; i++) {
     // Average period end.
     const end = Math.max(0, i - avgDays)
 
-    // The total reward earned in period
+    // The total amount earned in period
     let total = 0
     // period length to be determined
     let num = 0
 
     for (let j = i; j >= end; j--) {
       if (payouts[j]) {
-        total += Number(payouts[j].reward)
+        total += Number(payouts[j].amount)
       }
       // Increase by one to treat non-existent as zero value
       num += 1
     }
 
     if (total === 0) {
-      total = Number(payouts[i].reward)
+      total = Number(payouts[i].amount)
     }
 
-    // If on last reward and is a zero (current era still processing), use previous reward to
-    // prevent misleading dip
-    const reward =
-      i === payouts.length - 1 && payouts[i].reward === 0
-        ? payoutsAverages[i - 1].reward
-        : total / num
-
     payoutsAverages.push({
-      reward,
-      timestamp: payouts[i].timestamp,
+      amount: total / num,
+      block_timestamp: payouts[i].block_timestamp,
     })
   }
 
   // Return an array with the expected number of items
   payoutsAverages = payoutsAverages.filter(
-    (p) => daysPassed(fromUnixTime(p.timestamp), fromDate) <= days
+    (p) => daysPassed(fromUnixTime(p.block_timestamp), fromDate) <= days
   )
 
   return payoutsAverages
@@ -299,8 +296,8 @@ const getPreMaxDaysPayouts = (
   // Remove payouts that are not within `avgDays` `days` pre-graph window
   payouts.filter(
     (p: RewardResult) =>
-      daysPassed(fromUnixTime(p.timestamp), fromDate) > days &&
-      daysPassed(fromUnixTime(p.timestamp), fromDate) <= days + avgDays
+      daysPassed(fromUnixTime(p.block_timestamp), fromDate) > days &&
+      daysPassed(fromUnixTime(p.block_timestamp), fromDate) <= days + avgDays
   )
 // Combine payouts and pool claims
 //
@@ -309,28 +306,28 @@ export const combineRewards = (
   payouts: RewardRecord[],
   poolClaims: RewardRecord[]
 ) => {
-  // We first check if actual payouts exist, e.g. there are non-zero payout rewards present in
-  // either payouts or pool claims.
-  const poolClaimExists = poolClaims.find((p) => Number(p.reward) > 0) || null
-  const payoutExists = payouts.find((p) => Number(p.reward) > 0) || null
+  // we first check if actual payouts exist, e.g. there are non-zero payout
+  // amounts present in either payouts or pool claims.
+  const poolClaimExists = poolClaims.find((p) => Number(p.amount) > 0) || null
+  const payoutExists = payouts.find((p) => Number(p.amount) > 0) || null
 
-  // If no pool claims exist but payouts do, return payouts. Also do this if there are no payouts
-  // period
+  // if no pool claims exist but payouts do, return payouts w.o. event_id
+  // also do this if there are no payouts period.
   if (
     (!poolClaimExists && payoutExists) ||
     (!payoutExists && !poolClaimExists)
   ) {
     return payouts.map((p) => ({
-      reward: p.reward,
-      timestamp: p.timestamp,
+      amount: p.amount,
+      block_timestamp: p.block_timestamp,
     }))
   }
 
-  // If no payouts exist but pool claims do, return pool claims
+  // If no payouts exist but pool claims do, return pool claims w.o. event_id
   if (!payoutExists && poolClaimExists) {
     return poolClaims.map((p) => ({
-      reward: p.reward,
-      timestamp: p.timestamp,
+      amount: p.amount,
+      block_timestamp: p.block_timestamp,
     }))
   }
 
@@ -340,19 +337,19 @@ export const combineRewards = (
   let payoutDays: AnyJson[] = []
   // Prefill `dates` with all pool claim and payout days
   poolClaims.forEach((p) => {
-    const dayStart = getUnixTime(startOfDay(fromUnixTime(p.timestamp)))
+    const dayStart = getUnixTime(startOfDay(fromUnixTime(p.block_timestamp)))
     if (!payoutDays.includes(dayStart)) {
       payoutDays.push(dayStart)
     }
   })
   payouts.forEach((p) => {
-    const dayStart = getUnixTime(startOfDay(fromUnixTime(p.timestamp)))
+    const dayStart = getUnixTime(startOfDay(fromUnixTime(p.block_timestamp)))
     if (!payoutDays.includes(dayStart)) {
       payoutDays.push(dayStart)
     }
   })
 
-  // Sort payoutDays by `timestamp`
+  // Sort payoutDays by `block_timestamp`
   payoutDays = payoutDays.sort((a, b) => a - b)
 
   // Iterate payout days.
@@ -362,25 +359,25 @@ export const combineRewards = (
 
   // Loop pool claims and consume / combine payouts
   payoutDays.forEach((d) => {
-    let reward = 0
+    let amount = 0
 
     // Check payouts exist on this day
     const payoutsThisDay = payouts.filter((p) =>
-      isSameDay(fromUnixTime(p.timestamp), fromUnixTime(d))
+      isSameDay(fromUnixTime(p.block_timestamp), fromUnixTime(d))
     )
     // Check pool claims exist on this day
     const poolClaimsThisDay = poolClaims.filter((p) =>
-      isSameDay(fromUnixTime(p.timestamp), fromUnixTime(d))
+      isSameDay(fromUnixTime(p.block_timestamp), fromUnixTime(d))
     )
-    // Add rewards
+    // Add amounts
     if (payoutsThisDay.concat(poolClaimsThisDay).length) {
       for (const payout of payoutsThisDay) {
-        reward += Number(payout.reward)
+        amount += payout.amount
       }
     }
     rewards.push({
-      reward: reward.toString(),
-      timestamp: d,
+      amount,
+      block_timestamp: d,
     })
   })
   return rewards
@@ -395,9 +392,9 @@ export const getLatestReward = (
 ) => {
   // Get most recent payout
   const payoutExists =
-    payouts.find((p) => new BigNumber(p.reward).isGreaterThan(0)) ?? null
+    payouts.find((p) => new BigNumber(p.amount).isGreaterThan(0)) ?? null
   const poolClaimExists =
-    poolClaims.find((p) => new BigNumber(p.reward).isGreaterThan(0)) ?? null
+    poolClaims.find((p) => new BigNumber(p.amount).isGreaterThan(0)) ?? null
 
   // Calculate which payout was most recent
   let lastReward = null
@@ -411,7 +408,7 @@ export const getLatestReward = (
   } else {
     // Both `payoutExists` and `poolClaimExists` are present
     lastReward =
-      payoutExists.timestamp > poolClaimExists.timestamp
+      payoutExists.block_timestamp > poolClaimExists.block_timestamp
         ? payoutExists
         : poolClaimExists
   }
@@ -430,7 +427,7 @@ export const prefillMissingDays = (
   const payoutStartDay = subDays(startOfDay(fromDate), maxDays)
   const payoutEndDay = !payouts.length
     ? startOfDay(fromDate)
-    : startOfDay(fromUnixTime(payouts[payouts.length - 1].timestamp))
+    : startOfDay(fromUnixTime(payouts[payouts.length - 1].block_timestamp))
 
   const daysToPreFill = daysPassed(payoutStartDay, payoutEndDay)
 
@@ -439,8 +436,9 @@ export const prefillMissingDays = (
       newPayouts.push({
         who: '',
         poolId: 0,
-        reward: '0',
-        timestamp: getUnixTime(subDays(payoutEndDay, i)),
+        amount: 0,
+        event_id: 'Reward',
+        block_timestamp: getUnixTime(subDays(payoutEndDay, i)),
       })
     }
   }
@@ -456,7 +454,7 @@ export const postFillMissingDays = (
   maxDays: number
 ): RewardResults => {
   const newPayouts = []
-  const payoutsEndDay = startOfDay(fromUnixTime(payouts[0].timestamp))
+  const payoutsEndDay = startOfDay(fromUnixTime(payouts[0].block_timestamp))
   const daysSinceLast = Math.min(
     daysPassed(payoutsEndDay, startOfDay(fromDate)),
     maxDays
@@ -466,14 +464,15 @@ export const postFillMissingDays = (
     newPayouts.push({
       who: '',
       poolId: 0,
-      reward: '0',
-      timestamp: getUnixTime(addDays(payoutsEndDay, i)),
+      amount: 0,
+      event_id: 'Reward',
+      block_timestamp: getUnixTime(addDays(payoutsEndDay, i)),
     })
   }
   return newPayouts
 }
 
-// Fill gap days within payouts with zero rewards
+// Fill gap days within payouts with zero amounts
 export const fillGapDays = (payouts: RewardRecord[], fromDate: Date) => {
   const finalPayouts: RewardRecord[] = []
 
@@ -481,7 +480,7 @@ export const fillGapDays = (payouts: RewardRecord[], fromDate: Date) => {
   let curDay = fromDate
 
   for (const p of payouts) {
-    const thisDay = fromUnixTime(p.timestamp)
+    const thisDay = fromUnixTime(p.block_timestamp)
     const gapDays = Math.max(0, daysPassed(thisDay, curDay) - 1)
 
     if (gapDays > 0) {
@@ -489,8 +488,9 @@ export const fillGapDays = (payouts: RewardRecord[], fromDate: Date) => {
       if (gapDays > 0) {
         for (let j = 1; j <= gapDays; j++) {
           finalPayouts.push({
-            reward: '0',
-            timestamp: getUnixTime(subDays(curDay, j)),
+            amount: 0,
+            event_id: 'Reward',
+            block_timestamp: getUnixTime(subDays(curDay, j)),
           })
         }
       }
@@ -509,12 +509,16 @@ export const fillGapDays = (payouts: RewardRecord[], fromDate: Date) => {
 export const normalisePayouts = (payouts: RewardResults): RewardResults =>
   payouts.map((p) => ({
     ...p,
-    timestamp: getUnixTime(startOfDay(fromUnixTime(p.timestamp))),
+    block_timestamp: getUnixTime(startOfDay(fromUnixTime(p.block_timestamp))),
   }))
 
 // Utility: days passed since 2 dates
 export const daysPassed = (from: Date, to: Date) =>
   differenceInDays(startOfDay(to), startOfDay(from))
+
+// Utility: extract whether an event id should be a slash or reward, based on the net day amount.
+const getEventId = (c: PayoutDayCursor) =>
+  c.amount.isLessThan(0) ? 'Slash' : 'Reward'
 
 // Utility: Formats a width and height pair
 export const formatSize = (
@@ -531,47 +535,3 @@ export const formatSize = (
   height: height || minHeight,
   minHeight,
 })
-
-// Take non-zero rewards in most-recent order
-export const removeNonZeroAmountAndSort = (payouts: RewardResults) => {
-  const list = payouts
-    .filter((p) => Number(p.reward) > 0)
-    .sort((a, b) => b.timestamp - a.timestamp)
-
-  // Calculates from the current date.
-  const fromTimestamp = getUnixTime(subDays(new Date(), MaxPayoutDays))
-  // Ensure payouts not older than `MaxPayoutDays` are returned.
-  return list.filter(({ timestamp }) => timestamp >= fromTimestamp)
-}
-
-// Calculate the earliest date of a payout list
-export const getPayoutsFromDate = (payouts: RewardResults, locale: Locale) => {
-  if (!payouts.length) {
-    return undefined
-  }
-  const filtered = removeNonZeroAmountAndSort(payouts)
-  if (!filtered.length) {
-    return undefined
-  }
-  return format(
-    fromUnixTime(filtered[filtered.length - 1].timestamp),
-    'do MMM',
-    {
-      locale,
-    }
-  )
-}
-
-// Calculate the latest date of a payout list
-export const getPayoutsToDate = (payouts: RewardResults, locale: Locale) => {
-  if (!payouts.length) {
-    return undefined
-  }
-  const filtered = removeNonZeroAmountAndSort(payouts || [])
-  if (!filtered.length) {
-    return undefined
-  }
-  return format(fromUnixTime(filtered[0].timestamp), 'do MMM', {
-    locale,
-  })
-}

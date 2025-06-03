@@ -2,44 +2,52 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { faCircleDown } from '@fortawesome/free-solid-svg-icons'
-import { minDecimalPlaces, planckToUnit } from '@w3ux/utils'
+import { minDecimalPlaces } from '@w3ux/utils'
+import BigNumber from 'bignumber.js'
 import { getNetworkData } from 'consts/util'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts'
 import { useNetwork } from 'contexts/Network'
 import { usePayouts } from 'contexts/Payouts'
-import { usePlugins } from 'contexts/Plugins'
 import { Stat } from 'library/Stat'
 import { useTranslation } from 'react-i18next'
 import { useOverlay } from 'ui-overlay'
+import { planckToUnitBn } from 'utils'
 
 export const UnclaimedPayoutsStatus = ({ dimmed }: { dimmed: boolean }) => {
   const { t } = useTranslation()
   const { network } = useNetwork()
   const { isReady } = useApi()
   const { openModal } = useOverlay().modal
-  const {
-    unclaimedRewards: { total },
-  } = usePayouts()
-  const { pluginEnabled } = usePlugins()
+  const { unclaimedPayouts } = usePayouts()
   const { activeAddress } = useActiveAccounts()
   const { isReadOnlyAccount } = useImportedAccounts()
   const { units } = getNetworkData(network)
+
+  const totalUnclaimed = Object.values(unclaimedPayouts || {}).reduce(
+    (total, paginatedValidators) =>
+      Object.values(paginatedValidators)
+        .reduce((amount, [, value]) => amount.plus(value), new BigNumber(0))
+        .plus(total),
+    new BigNumber(0)
+  )
+
   return (
     <Stat
       label={t('pendingPayouts', { ns: 'pages' })}
       helpKey="Payout"
       type="odometer"
       stat={{
-        value:
-          total === '0'
-            ? '0.00'
-            : minDecimalPlaces(planckToUnit(total, units), 2),
+        value: minDecimalPlaces(
+          planckToUnitBn(totalUnclaimed, units).toFormat(),
+          2
+        ),
       }}
       dimmed={dimmed}
       buttons={
-        total !== '0' && pluginEnabled('staking_api')
+        Object.keys(unclaimedPayouts || {}).length > 0 &&
+        !totalUnclaimed.isZero()
           ? [
               {
                 title: t('claim', { ns: 'modals' }),

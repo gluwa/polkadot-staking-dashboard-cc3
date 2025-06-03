@@ -5,11 +5,13 @@ import { faBars, faGripVertical } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { ellipsisFn } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
+import type { AnyApi } from 'common-types'
 import { getNetworkData } from 'consts/util'
 import { useApi } from 'contexts/Api'
-import { ListProvider, useList } from 'contexts/List'
+import { useList } from 'contexts/List'
 import { useNetwork } from 'contexts/Network'
 import { useBondedPools } from 'contexts/Pools/BondedPools'
+import { StakingContext } from 'contexts/Staking'
 import { useThemeValues } from 'contexts/ThemeValues'
 import { useValidators } from 'contexts/Validators/ValidatorEntries'
 import { formatDistance, fromUnixTime } from 'date-fns'
@@ -17,49 +19,43 @@ import { motion } from 'framer-motion'
 import { Header, List, Wrapper as ListWrapper } from 'library/List'
 import { MotionContainer } from 'library/List/MotionContainer'
 import { Pagination } from 'library/List/Pagination'
+import { payoutsPerPage } from 'library/List/defaults'
 import { Identity } from 'library/ListItem/Labels/Identity'
 import { PoolIdentity } from 'library/ListItem/Labels/PoolIdentity'
 import { DefaultLocale, locales } from 'locales'
-import { isPoolReward } from 'plugin-staking-api'
-import type {
-  NominatorReward,
-  PoolReward,
-  RewardResults,
-} from 'plugin-staking-api/types'
-import { useEffect, useState } from 'react'
+import { Component, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { BondedPool } from 'types'
 import { planckToUnitBn } from 'utils'
 import { ItemWrapper } from '../Wrappers'
 import type { PayoutListProps } from '../types'
+import { PayoutListProvider } from './context'
 
 export const PayoutListInner = ({
   allowMoreCols,
   pagination,
   title,
   payouts: initialPayouts,
-  itemsPerPage,
 }: PayoutListProps) => {
   const { i18n, t } = useTranslation('pages')
   const { isReady, activeEra } = useApi()
   const { network } = useNetwork()
   const { bondedPools } = useBondedPools()
-  const { getValidators } = useValidators()
   const { getThemeValue } = useThemeValues()
   const { listFormat, setListFormat } = useList()
+  const { validators } = useValidators()
 
   const [page, setPage] = useState<number>(1)
   const { unit, units } = getNetworkData(network)
 
   // Manipulated list (ordering, filtering) of payouts
-  const [payouts, setPayouts] = useState<RewardResults>(initialPayouts)
+  const [payouts, setPayouts] = useState<AnyApi>(initialPayouts)
 
   // Whether still in initial fetch
   const [fetched, setFetched] = useState<boolean>(false)
 
-  const totalPages = Math.ceil(payouts.length / itemsPerPage)
-  const pageEnd = page * itemsPerPage - 1
-  const pageStart = pageEnd - (itemsPerPage - 1)
+  const totalPages = Math.ceil(payouts.length / payoutsPerPage)
+  const pageEnd = page * payoutsPerPage - 1
+  const pageStart = pageEnd - (payoutsPerPage - 1)
 
   // Refetch list when list changes
   useEffect(() => {
@@ -74,8 +70,13 @@ export const PayoutListInner = ({
     }
   }, [isReady, fetched, activeEra.index])
 
-  const listPayouts = payouts.slice(pageStart).slice(0, itemsPerPage)
-  if (!listPayouts.length) {
+  // get list items to render
+  let listPayouts = []
+
+  // get throttled subset or entire list
+  listPayouts = payouts.slice(pageStart).slice(0, payoutsPerPage)
+
+  if (!payouts.length) {
     return null
   }
 
@@ -113,30 +114,34 @@ export const PayoutListInner = ({
           <Pagination page={page} total={totalPages} setter={setPage} />
         )}
         <MotionContainer>
-          {listPayouts.map((p: NominatorReward | PoolReward, index: number) => {
-            const poolReward = isPoolReward(p)
-            const record = poolReward
-              ? (p as PoolReward)
-              : (p as NominatorReward)
+          {listPayouts.map((p: AnyApi, index: number) => {
+            const label =
+              p.event_id === 'PaidOut'
+                ? t('payouts.poolClaim')
+                : p.event_id === 'Rewarded'
+                  ? t('payouts.payout')
+                  : p.event_id
 
-            const label = poolReward ? t('poolClaim') : t('payout')
+            const labelClass =
+              p.event_id === 'PaidOut'
+                ? 'claim'
+                : p.event_id === 'Rewarded'
+                  ? 'reward'
+                  : undefined
 
-            const labelClass = poolReward ? 'claim' : 'reward'
+            // get validator if it exists
+            const validator = validators.find(
+              (v) => v.address === p.validator_stash
+            )
 
-            let batchIndex
-            let pool: BondedPool | undefined
-            if (poolReward) {
-              const item = p as PoolReward
-              pool = bondedPools.find(({ id }) => id === item.poolId)
-              batchIndex = pool ? bondedPools.indexOf(pool) : 0
-            } else {
-              const item = p as NominatorReward
-              const validator = getValidators().find(
-                (v) => v.address === item.validator
-              )
-              batchIndex = validator ? getValidators().indexOf(validator) : 0
-            }
+            // get pool if it exists
+            const pool = bondedPools.find(({ id }) => id === p.pool_id)
 
+            const batchIndex = validator
+              ? validators.indexOf(validator)
+              : pool
+                ? bondedPools.indexOf(pool)
+                : 0
             return (
               <motion.div
                 className={`item ${listFormat === 'row' ? 'row' : 'col'}`}
@@ -159,9 +164,9 @@ export const PayoutListInner = ({
                         <div>
                           <h4 className={labelClass}>
                             <>
-                              +
+                              {p.event_id === 'Slashed' ? '-' : '+'}
                               {planckToUnitBn(
-                                new BigNumber(record.reward),
+                                new BigNumber(p.amount),
                                 units
                               ).toString()}{' '}
                               {unit}
@@ -176,25 +181,28 @@ export const PayoutListInner = ({
                     <div className="row">
                       <div>
                         <div>
-                          {!poolReward ? (
-                            <NominatorIdentity
-                              batchIndex={batchIndex}
-                              address={(record as NominatorReward).validator}
-                            />
-                          ) : (
-                            <PoolClaim
-                              pool={pool}
-                              poolId={(record as PoolReward).poolId}
-                            />
-                          )}
-                          {label === t('slashed') && (
-                            <h4>{t('deductedFromBond')}</h4>
+                          {label === t('payouts.payout') &&
+                            (batchIndex > 0 ? (
+                              <Identity address={p.validator_stash} />
+                            ) : (
+                              <div>{ellipsisFn(p.validator_stash)}</div>
+                            ))}
+                          {label === t('payouts.poolClaim') &&
+                            (pool ? (
+                              <PoolIdentity pool={pool} />
+                            ) : (
+                              <h4>
+                                {t('payouts.fromPool')} {p.pool_id}
+                              </h4>
+                            ))}
+                          {label === t('payouts.slashed') && (
+                            <h4>{t('payouts.deductedFromBond')}</h4>
                           )}
                         </div>
                         <div>
                           <h5>
                             {formatDistance(
-                              fromUnixTime(record.timestamp),
+                              fromUnixTime(p.block_timestamp),
                               new Date(),
                               {
                                 addSuffix: true,
@@ -218,39 +226,14 @@ export const PayoutListInner = ({
     </ListWrapper>
   )
 }
-
 export const PayoutList = (props: PayoutListProps) => (
-  <ListProvider>
-    <PayoutListInner {...props} />
-  </ListProvider>
+  <PayoutListProvider>
+    <PayoutListShouldUpdate {...props} />
+  </PayoutListProvider>
 )
-
-export const NominatorIdentity = ({
-  batchIndex,
-  address,
-}: {
-  batchIndex: number
-  address: string
-}) =>
-  batchIndex > 0 ? (
-    <Identity address={address} />
-  ) : (
-    <div>{ellipsisFn(address)}</div>
-  )
-
-export const PoolClaim = ({
-  pool,
-  poolId,
-}: {
-  pool: BondedPool | undefined
-  poolId: number
-}) => {
-  const { t } = useTranslation('pages')
-  return pool ? (
-    <PoolIdentity pool={pool} />
-  ) : (
-    <h4>
-      {t('fromPool')} {poolId}
-    </h4>
-  )
+export class PayoutListShouldUpdate extends Component {
+  static contextType = StakingContext
+  render() {
+    return <PayoutListInner {...this.props} />
+  }
 }

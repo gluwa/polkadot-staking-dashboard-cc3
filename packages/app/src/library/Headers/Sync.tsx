@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { pageFromUri } from '@w3ux/utils'
+import { usePayouts } from 'contexts/Payouts'
 import { useBondedPools } from 'contexts/Pools/BondedPools'
 import { useTxMeta } from 'contexts/TxMeta'
 import { useValidators } from 'contexts/Validators/ValidatorEntries'
@@ -15,6 +16,18 @@ export const Sync = () => {
   const { pathname } = useLocation()
   const { getValidators } = useValidators()
   const { bondedPools } = useBondedPools()
+  const { payoutsSynced } = usePayouts()
+
+  // Keep syncing if on nominate page and still fetching payouts.
+  const onNominateSyncing = () => {
+    if (
+      pageFromUri(pathname, 'overview') === 'nominate' &&
+      payoutsSynced !== 'synced'
+    ) {
+      return true
+    }
+    return false
+  }
 
   // Keep syncing if on pools page and still fetching bonded pools or pool members. Ignore pool
   // member sync if Subscan is enabled
@@ -41,6 +54,7 @@ export const Sync = () => {
   const isSyncing =
     syncing ||
     onPoolsSyncing() ||
+    onNominateSyncing() ||
     onValidatorsSyncing() ||
     uids.filter(({ submitted }) => submitted === true).length > 0
 

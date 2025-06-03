@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type BigNumber from 'bignumber.js'
-import type { NominatorReward, PoolReward } from 'plugin-staking-api/types'
+import type { SubscanPayoutData } from 'controllers/Subscan/types'
 
 export interface BondedProps {
   active: BigNumber
@@ -15,26 +15,16 @@ export interface BondedProps {
 export interface PayoutBarProps {
   days: number
   height: string
-  data: GraphPayoutData
-  nominating: boolean
-  inPool: boolean
+  data: SubscanPayoutData
   syncing: boolean
 }
 
-export interface AveragePayoutLineProps {
+export interface PayoutLineProps {
   days: number
   average: number
   height: string
   background?: string
-  data: GraphPayoutData
-  nominating: boolean
-  inPool: boolean
-}
-
-export interface GraphPayoutData {
-  payouts: NominatorReward[]
-  unclaimedPayouts: NominatorReward[]
-  poolClaims: PoolReward[]
+  data: SubscanPayoutData
 }
 
 export interface CardHeaderWrapperProps {
@@ -47,7 +37,8 @@ export interface CardWrapperProps {
 }
 
 export interface PayoutDayCursor {
-  reward: BigNumber
+  amount: BigNumber
+  event_id: string
 }
 
 export interface GeoDonutProps {

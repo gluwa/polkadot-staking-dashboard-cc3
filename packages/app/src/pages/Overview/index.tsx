@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { CardWrapper } from 'library/Card/Wrappers'
+import { PluginLabel } from 'library/PluginLabel'
 import { useTranslation } from 'react-i18next'
 import { Page, Stat } from 'ui-core/base'
 import { BalanceChart } from './AccountBalance/BalanceChart'
 import { BalanceLinks } from './AccountBalance/BalanceLinks'
 import { NetworkStats } from './NetworkSats'
-import { Payouts } from './Payouts'
+import { Payouts } from './Payouts/Payouts'
 import { StakeStatus } from './StakeStatus'
 import { AverageRewardRate } from './Stats/AveragelRewardRate'
 import { NextRewards } from './Stats/NextRewards'
@@ -40,6 +41,7 @@ export const Overview = () => {
         </Page.RowSection>
         <Page.RowSection hLast vLast>
           <CardWrapper style={{ minHeight: PAYOUTS_HEIGHT }}>
+            <PluginLabel plugin="subscan" />
             <Payouts />
           </CardWrapper>
         </Page.RowSection>

@@ -28,27 +28,6 @@ export type UseTokenPriceResult = Query & {
   data: TokenPriceResult
 }
 
-export type AllRewardsResult = Query & {
-  data: {
-    allRewards: NominatorReward[]
-  }
-}
-
-export interface NominatorReward {
-  era: number
-  reward: string
-  claimed: boolean
-  timestamp: number
-  validator: string
-  type: string
-}
-
-export type UnclaimedRewardsResult = Query & {
-  data: {
-    unclaimedRewards: UnclaimedRewards
-  }
-}
-
 export type ValidatorRewardsResult = Query & {
   data: {
     validatorRewards: ValidatorReward[]
@@ -88,22 +67,6 @@ export type ValidatorEraPointsBatchResult = Query & {
   data: {
     validatorEraPointsBatch: ValidatorEraPointsBatch[]
   }
-}
-
-export interface UnclaimedRewards {
-  total: string
-  entries: EraUnclaimedReward[]
-}
-export interface EraUnclaimedReward {
-  era: number
-  reward: string
-  validators: ValidatorUnclaimedReward[]
-}
-
-export interface ValidatorUnclaimedReward {
-  validator: string
-  reward: string
-  page: number | null
 }
 
 export interface ValidatorEraPoints {

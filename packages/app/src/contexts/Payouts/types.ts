@@ -1,9 +1,24 @@
-// Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
+// Copyright 2024 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { UnclaimedRewards } from 'plugin-staking-api/types'
+import type { Sync } from '@w3ux/types'
 
 export interface PayoutsContextInterface {
-  unclaimedRewards: UnclaimedRewards
-  setUnclaimedRewards: (unclaimedRewards: UnclaimedRewards) => void
+  payoutsSynced: Sync
+  unclaimedPayouts: UnclaimedPayouts
+  removeEraPayout: (era: string, validator: string) => void
+}
+
+// Record<era, EraUnclaimedPayouts>
+export type UnclaimedPayouts = Record<string, EraUnclaimedPayouts> | null
+
+// Record<validator, [page, amount]>
+export type EraUnclaimedPayouts = Record<string, [number, string]>
+
+export interface LocalValidatorExposure {
+  staked: string
+  total: string
+  share: string
+  isValidator: boolean
+  exposedPage: number
 }

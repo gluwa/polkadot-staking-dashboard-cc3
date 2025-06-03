@@ -12,18 +12,18 @@ import { useActivePool } from 'contexts/Pools/ActivePool'
 import { useStaking } from 'contexts/Staking'
 import { useUi } from 'contexts/UI'
 import { formatDistance, fromUnixTime, getUnixTime } from 'date-fns'
+import { useSubscanData } from 'hooks/useSubscanData'
 import { useSyncing } from 'hooks/useSyncing'
-import { formatSize } from 'library/Graphs/Utils'
+import { PayoutBar } from 'library/Graphs/PayoutBar'
+import { PayoutLine } from 'library/Graphs/PayoutLine'
+import { formatRewardsForGraphs, formatSize } from 'library/Graphs/Utils'
 import { GraphWrapper } from 'library/Graphs/Wrapper'
 import { StatusLabel } from 'library/StatusLabel'
 import { DefaultLocale, locales } from 'locales'
-import type { RewardResult } from 'plugin-staking-api/types'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CardHeader, CardLabel } from 'ui-core/base'
 import { planckToUnitBn } from 'utils'
-import { ActiveGraph } from './ActiveGraph'
-import { InactiveGraph } from './InactiveGraph'
 
 export const Payouts = () => {
   const { i18n, t } = useTranslation('pages')
@@ -32,13 +32,22 @@ export const Payouts = () => {
   const { units } = getNetworkData(network)
   const { inSetup } = useStaking()
   const { syncing } = useSyncing()
+  const { plugins } = usePlugins()
   const { containerRefs } = useUi()
   const { inPool } = useActivePool()
+  const { getData, injectBlockTimestamp } = useSubscanData([
+    'payouts',
+    'unclaimedPayouts',
+    'poolClaims',
+  ])
+  const notStaking = !syncing && inSetup()
 
-  const staking = !inSetup() || inPool
-  const notStaking = !syncing && !staking
+  // Get data safely from subscan hook.
+  const data = getData(['payouts', 'unclaimedPayouts', 'poolClaims'])
 
-  const [lastReward, setLastReward] = useState<RewardResult>()
+  // Inject `block_timestamp` for unclaimed payouts.
+  data['unclaimedPayouts'] = injectBlockTimestamp(data?.unclaimedPayouts || [])
+
   // Ref to the graph container
   const graphInnerRef = useRef<HTMLDivElement>(null)
 
@@ -48,11 +57,22 @@ export const Payouts = () => {
   })
   const { width, height, minHeight } = formatSize(size, 260)
 
+  // Get the last reward with its timestmap.
+  const { lastReward } = formatRewardsForGraphs(
+    new Date(),
+    14,
+    units,
+    data.payouts,
+    data.poolClaims,
+    data.unclaimedPayouts
+  )
   let formatFrom = new Date()
   let formatTo = new Date()
   let formatOpts = {}
-  if (lastReward !== undefined) {
-    formatFrom = fromUnixTime(lastReward.timestamp ?? getUnixTime(new Date()))
+  if (lastReward !== null) {
+    formatFrom = fromUnixTime(
+      lastReward?.block_timestamp ?? getUnixTime(new Date())
+    )
     formatTo = new Date()
     formatOpts = {
       addSuffix: true,
@@ -68,17 +88,17 @@ export const Payouts = () => {
           <Token />
           <Odometer
             value={minDecimalPlaces(
-              lastReward === undefined
+              lastReward === null
                 ? '0'
                 : planckToUnitBn(
-                    new BigNumber(lastReward?.reward || 0),
+                    new BigNumber(lastReward?.amount || 0),
                     units
                   ).toFormat(),
               2
             )}
           />
           <CardLabel>
-            {lastReward === undefined ? (
+            {lastReward === null ? (
               ''
             ) : (
               <>&nbsp;{formatDistance(formatFrom, formatTo, formatOpts)}</>
@@ -87,31 +107,28 @@ export const Payouts = () => {
         </h2>
       </CardHeader>
       <div className="inner" ref={graphInnerRef} style={{ minHeight }}>
-        <StatusLabel
-          status="sync_or_setup"
-          title={t('overview.notStaking')}
-          topOffset="37%"
-        />
-        <GraphWrapper
-          style={{
-            height: `${height}px`,
-            width: `${width}px`,
-            position: 'absolute',
-            opacity: notStaking ? 0.75 : 1,
-            transition: 'opacity 0.5s',
-          }}
-        >
-          {staking ? (
-            <ActiveGraph
-              nominating={!inSetup()}
-              inPool={inPool()}
-              lineMarginTop="3rem"
-              setLastReward={setLastReward}
-            />
-          ) : (
-            <InactiveGraph setLastReward={setLastReward} />
-          )}
-        </GraphWrapper>
+        {!plugins.includes('subscan') ? (
+          <StatusLabel
+            status="subscan"
+            title={t('overview.subscanDisabled')}
+            topOffset="37%"
+          />
+        ) : (
+          <GraphWrapper
+            style={{
+              height: `${height}px`,
+              width: `${width}px`,
+              position: 'absolute',
+              opacity: notStaking ? 0.75 : 1,
+              transition: 'opacity 0.5s',
+            }}
+          >
+            <PayoutBar days={19} height="150px" data={data} />
+            <div style={{ marginTop: '3rem' }}>
+              <PayoutLine days={19} average={10} height="65px" data={data} />
+            </div>
+          </GraphWrapper>
+        )}
       </div>
     </>
   )

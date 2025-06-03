@@ -9,7 +9,7 @@ import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
 import { usePayouts } from 'contexts/Payouts'
-import type { SubmittableExtrinsic } from 'dedot'
+import { Subscan } from 'controllers/Subscan'
 import { useBatchCall } from 'hooks/useBatchCall'
 import { useSignerWarnings } from 'hooks/useSignerWarnings'
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic'
@@ -37,8 +37,8 @@ export const Forms = forwardRef(
     const { setModalStatus } = useOverlay().modal
     const { activeAddress } = useActiveAccounts()
     const { getSignerWarnings } = useSignerWarnings()
-    const { unclaimedRewards, setUnclaimedRewards } = usePayouts()
     const { unit, units } = getNetworkData(network)
+    const { removeEraPayout } = usePayouts()
 
     // Get the total payout amount
     const totalPayout =
@@ -55,29 +55,33 @@ export const Forms = forwardRef(
         0
       ) || 0
 
+    const getCalls = () => {
+      const calls = payouts?.reduce((acc, { era, paginatedValidators }) => {
+        if (!paginatedValidators) {
+          return acc
+        }
+        paginatedValidators.forEach(([page, v]) => {
+          const tx = new PayoutStakersByPage(network, v, Number(era), page).tx()
+
+          if (tx) {
+            acc.push()
+          }
+        })
+        return acc
+      }, [])
+      return calls || []
+    }
+
+    // Store whether form is valid to submit transaction.
     const [valid, setValid] = useState<boolean>(
       totalPayout.isGreaterThan(0) && totalPayoutValidators > 0
     )
 
-    const getCalls = () => {
-      const calls =
-        payouts?.reduce(
-          (acc: SubmittableExtrinsic[], { era, paginatedValidators }) => {
-            if (!paginatedValidators.length) {
-              return acc
-            }
-            paginatedValidators.forEach(([page, v]) => {
-              const tx = serviceApi.tx.payoutStakersByPage(v, Number(era), page)
-              if (tx) {
-                acc.push(tx)
-              }
-            })
-            return acc
-          },
-          []
-        ) || []
-      return calls
-    }
+    // Ensure payouts value is valid.
+    useEffect(
+      () => setValid(totalPayout.isGreaterThan(0) && totalPayoutValidators > 0),
+      [payouts]
+    )
 
     const getTx = () => {
       const calls = getCalls()
@@ -98,20 +102,19 @@ export const Forms = forwardRef(
       },
       callbackInBlock: () => {
         if (payouts && activeAddress) {
-          // Deduct unclaimed payout value from state value
+          // Remove Subscan unclaimed payout record(s) if they exist.
           const eraPayouts: string[] = []
           payouts.forEach(({ era }) => {
             eraPayouts.push(String(era))
           })
-          const newUnclaimedRewards = {
-            total: new BigNumber(unclaimedRewards.total)
-              .minus(totalPayout)
-              .toString(),
-            entries: unclaimedRewards.entries.filter(
-              (entry) => !eraPayouts.includes(String(entry.era))
-            ),
-          }
-          setUnclaimedRewards(newUnclaimedRewards)
+          Subscan.removeUnclaimedPayouts(activeAccount, eraPayouts)
+
+          // Deduct from `unclaimedPayouts` in Payouts context.
+          payouts.forEach(({ era, paginatedValidators }) => {
+            for (const v of paginatedValidators || []) {
+              removeEraPayout(era, v[1])
+            }
+          })
         }
         // Reset active form payouts for this modal
         setPayouts([])
@@ -122,12 +125,6 @@ export const Forms = forwardRef(
       activeAddress,
       false,
       submitExtrinsic.proxySupported
-    )
-
-    // Ensure payouts value is valid
-    useEffect(
-      () => setValid(totalPayout.isGreaterThan(0) && totalPayoutValidators > 0),
-      [payouts]
     )
 
     return (

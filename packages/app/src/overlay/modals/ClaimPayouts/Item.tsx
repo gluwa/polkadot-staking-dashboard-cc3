@@ -12,15 +12,15 @@ import { ItemWrapper } from './Wrappers'
 
 export const Item = ({
   era,
-  validators,
+  unclaimedPayout,
   setPayouts,
   setSection,
 }: ItemProps) => {
   const { t } = useTranslation('modals')
   const { network } = useNetwork()
   const { unit, units } = getNetworkData(network)
-  const totalPayout = getTotalPayout(validators)
-  const numPayouts = validators.length
+  const totalPayout = getTotalPayout(unclaimedPayout)
+  const numPayouts = Object.values(unclaimedPayout).length
 
   return (
     <ItemWrapper>
@@ -47,8 +47,8 @@ export const Item = ({
                   {
                     era,
                     payout: totalPayout.toString(),
-                    paginatedValidators: validators.map(
-                      ({ page, validator }) => [page || 0, validator]
+                    paginatedValidators: Object.entries(unclaimedPayout).map(
+                      ([v, [page]]) => [page, v]
                     ),
                   },
                 ])

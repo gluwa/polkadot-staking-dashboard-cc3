@@ -1,13 +1,14 @@
-// Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
+// Copyright 2024 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
 import BigNumber from 'bignumber.js'
-import type { ValidatorUnclaimedReward } from 'plugin-staking-api/types'
+import type { EraUnclaimedPayouts } from 'contexts/Payouts/types'
 
 export const getTotalPayout = (
-  validators: ValidatorUnclaimedReward[]
+  unclaimedPayout: EraUnclaimedPayouts
 ): BigNumber =>
-  validators.reduce(
-    (acc: BigNumber, { reward }: ValidatorUnclaimedReward) => acc.plus(reward),
+  Object.values(unclaimedPayout).reduce(
+    (acc: BigNumber, paginatedValidator: [number, string]) =>
+      acc.plus(paginatedValidator[1]),
     new BigNumber(0)
   )
