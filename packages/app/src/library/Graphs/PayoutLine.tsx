@@ -31,6 +31,7 @@ import {
   combineRewards,
   formatRewardsForGraphs,
 } from './Utils'
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -40,6 +41,7 @@ ChartJS.register(
   Tooltip,
   Legend
 )
+
 export const PayoutLine = ({
   days,
   average,
@@ -47,17 +49,16 @@ export const PayoutLine = ({
   background,
   data: { payouts, poolClaims },
 }: PayoutLineProps) => {
-  const { t } = useTranslation('library')
-  const { getThemeValue } = useThemeValues()
+  const { t } = useTranslation('pages')
   const { mode } = useTheme()
   const { inSetup } = useStaking()
   const { syncing } = useSyncing(['balances'])
-  const { getPoolMembership } = useBalances()
-  const { activeAccount } = useActiveAccounts()
-
+  const { getStakingLedger } = useBalances()
+  const { activeAddress } = useActiveAccounts()
+  const { poolMembership } = getStakingLedger(activeAddress)
   const { network } = useNetwork()
   const { unit, units } = getNetworkData(network)
-  const poolMembership = getPoolMembership(activeAccount)
+  const { getThemeValue } = useThemeValues()
   const notStaking = !syncing && inSetup() && !poolMembership
   const inPoolOnly = !syncing && inSetup() && !!poolMembership
 
@@ -73,14 +74,13 @@ export const PayoutLine = ({
     units,
     payoutsNoSlash,
     poolClaims,
-    [] // Note: we are not using `unclaimedPayouts` here
+    [] // Note: we are not using `unclaimedPayouts` here.
   )
 
   const { p: graphPayouts, a: graphPrePayouts } = allPayouts
   const { p: graphPoolClaims, a: graphPrePoolClaims } = allPoolClaims
 
   // combine payouts and pool claims into one dataset and calculate averages.
-  // Combine payouts and pool claims into one dataset and calculate averages
   const combined = combineRewards(graphPayouts, graphPoolClaims)
   const preCombined = combineRewards(graphPrePayouts, graphPrePoolClaims)
 
@@ -152,6 +152,7 @@ export const PayoutLine = ({
       },
     },
   }
+
   const data = {
     labels: combinedPayouts.map(() => ''),
     datasets: [
@@ -167,6 +168,7 @@ export const PayoutLine = ({
       },
     ],
   }
+
   return (
     <>
       <h5 className="secondary" style={{ paddingLeft: '1.5rem' }}>

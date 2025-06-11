@@ -22,7 +22,7 @@ export interface PayoutBarProps {
 export interface PayoutLineProps {
   days: number
   average: number
-  height: string
+  height: string | number
   background?: string
   data: SubscanPayoutData
 }

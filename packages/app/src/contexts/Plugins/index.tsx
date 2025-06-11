@@ -43,10 +43,15 @@ export const PluginsProvider = ({ children }: { children: ReactNode }) => {
   // Check if a plugin is currently enabled
   const pluginEnabled = (key: Plugin) => pluginsRef.current.includes(key)
 
-  // Reset payouts on Subscan plugin not enabled. Otherwise fetch payouts
+  // Reset payouts on Subscan plugin not enabled. Otherwise fetch payouts.
   useEffectIgnoreInitial(() => {
-    if (plugins.includes('subscan')) {
+    if (!plugins.includes('subscan')) {
+      Subscan.resetData()
+    } else if (isReady && !(activeEra.index == 0)) {
       Subscan.network = network
+      if (activeAddress) {
+        Subscan.handleFetchPayouts(activeAddress)
+      }
     }
   }, [plugins.includes('subscan'), isReady, network, activeAddress, activeEra])
 

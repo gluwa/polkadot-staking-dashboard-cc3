@@ -15,7 +15,7 @@ import type {
 } from './types'
 
 export class Subscan {
-  // List of endpoints to be used for Subscan API calls
+  // List of endpoints to be used for Subscan API calls.
   static ENDPOINTS = {
     eraStat: '/api/scan/staking/era_stat',
     poolMembers: '/api/scan/nomination_pool/pool/members',
@@ -29,22 +29,21 @@ export class Subscan {
   // Maximum amount of payout days supported.
   static MAX_PAYOUT_DAYS = 60
 
-  // The network to use for Subscan API calls
+  // The network to use for Subscan API calls.
   static network: string
 
-  // Subscan payout data, keyed by address
+  // Subscan payout data, keyed by address.
   static payoutData: Record<string, SubscanData> = {}
 
-  // Subscan pool data, keyed by `<network>-<poolId>-<key1>-<key2>...`
+  // Subscan pool data, keyed by `<network>-<poolId>-<key1>-<key2>...`.
   static poolData: Record<string, PoolMember[]> = {}
 
-  // Subscan era points data, keyed by `<network>-<address>-<era>`
+  // Subscan era points data, keyed by `<network>-<address>-<era>`.
   static eraPointsData: Record<string, SubscanEraPoints[]> = {}
 
   // Set the network to use for Subscan API calls.
   //
   // Effects the endpoint being used. Should be updated on network change in the UI.
-  // Set the network to use for Subscan API calls
   set network(network: string) {
     Subscan.network = network
   }
@@ -150,7 +149,7 @@ export class Subscan {
     }
   }
 
-  // Fetch a page of pool members from Subscan
+  // Fetch a page of pool members from Subscan.
   static fetchPoolMembers = async (
     poolId: number,
     page: number
@@ -172,6 +171,7 @@ export class Subscan {
       .reverse()
       .splice(0, result.list.length - 1)
   }
+
   // Fetch a pool's era points from Subscan.
   static fetchEraPoints = async (
     address: string,
@@ -185,6 +185,7 @@ export class Subscan {
     if (!result) {
       return []
     }
+
     // Format list to just contain reward points.
     const list = []
     for (let i = era; i > era - 100; i--) {
@@ -199,22 +200,27 @@ export class Subscan {
     // Removes last zero item and return.
     return list.reverse().splice(0, list.length - 1)
   }
+
   // Handle fetching pool members.
   static handleFetchPoolMembers = async (poolId: number, page: number) => {
     const dataKey = `${this.network}-${poolId}-${page}-members}`
     const currentValue = this.poolData[dataKey]
+
     if (currentValue) {
       return currentValue
     } else {
       const result = await this.fetchPoolMembers(poolId, page)
       this.poolData[dataKey] = result
+
       return result
     }
   }
+
   // Handle fetching era point history.
   static handleFetchEraPoints = async (address: string, era: number) => {
     const dataKey = `${this.network}-${address}-${era}}`
     const currentValue = this.eraPointsData[dataKey]
+
     if (currentValue) {
       return currentValue
     } else {
@@ -223,6 +229,7 @@ export class Subscan {
       return result
     }
   }
+
   // Resets all received data from class.
   static resetData = () => {
     this.payoutData = {}
@@ -296,6 +303,8 @@ export class Subscan {
 
   // Get the public Subscan endpoint.
   static getEndpoint = () => `https://${this.network}.api.subscan.io`
+
+  static getExplorerUrl = () => `https://${this.network}.subscan.io`
 
   // Make a request to Subscan and return any data returned from the response.
   static makeRequest = async (endpoint: string, body: SubscanRequestBody) => {

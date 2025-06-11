@@ -40,7 +40,8 @@ export const useSubscanData = (keys: PayoutType[]) => {
         receivedKeys
           .filter((key) => keys.includes(key))
           .forEach((key) => {
-            newData[key] = Subscan.payoutData[activeAccount.address]?.[key] || []
+            newData[key] =
+              Subscan.payoutData[activeAccount.address]?.[key] || []
           })
 
         setStateWithRef({ ...dataRef.current, ...newData }, setData, dataRef)
@@ -49,7 +50,6 @@ export const useSubscanData = (keys: PayoutType[]) => {
   }
 
   // Listen for new subscan data updates.
-  // Listen for new subscan data updates
   const documentRef = useRef<Document>(document)
   useEventListener(
     'subscan-data-updated',
@@ -75,7 +75,9 @@ export const useSubscanData = (keys: PayoutType[]) => {
       return entries
     }
     entries.forEach((p) => {
-      p.block_timestamp = (Number(activeEra.start) * 0.001) - erasToSeconds(activeEra.index- p.era - 1)
+      p.block_timestamp =
+        Number(activeEra.start) * 0.001 -
+        erasToSeconds(activeEra.index - p.era - 1)
     })
     return entries
   }

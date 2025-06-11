@@ -86,7 +86,7 @@ export const Payouts = ({ page: { key } }: PageProps) => {
           <PluginLabel plugin="subscan" />
           <CardHeader>
             <h4>
-              {t('payouts.payoutHistory', { ns: 'pages' })}
+              {t('payoutHistory', { ns: 'pages' })}
               <ButtonHelp
                 marginLeft
                 onClick={() => openHelp('Payout History')}
@@ -101,7 +101,7 @@ export const Payouts = ({ page: { key } }: PageProps) => {
                   )}
                 </>
               ) : (
-                t('payouts.none', { ns: 'pages' })
+                t('none', { ns: 'pages' })
               )}
             </h2>
           </CardHeader>
@@ -109,7 +109,7 @@ export const Payouts = ({ page: { key } }: PageProps) => {
             {!plugins.includes('subscan') ? (
               <StatusLabel
                 status="subscan"
-                title={t('payouts.subscanDisabled', { ns: 'pages' })}
+                title={t('subscanDisabled', { ns: 'pages' })}
                 topOffset="30%"
               />
             ) : (
@@ -126,7 +126,7 @@ export const Payouts = ({ page: { key } }: PageProps) => {
                   days={MaxPayoutDays}
                   height="165px"
                   data={data}
-                  syncing
+                  syncing={syncing}
                 />
                 <PayoutLine
                   days={MaxPayoutDays}

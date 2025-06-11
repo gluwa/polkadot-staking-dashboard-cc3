@@ -4,6 +4,7 @@
 import type { ExtensionInjected } from '@w3ux/types'
 import type { NotificationItem } from 'controllers/Notifications/types'
 import type { OnlineStatusEvent } from 'controllers/OnlineStatus/types'
+import type { PayoutType } from 'controllers/Subscan/types'
 import type { TxSubmissionItem } from 'controllers/TxSubmission/types'
 import type { FC } from 'react'
 
@@ -19,6 +20,7 @@ declare global {
     notification: CustomEvent<NotificationItem>
     'online-status': CustomEvent<OnlineStatusEvent>
     'new-tx-uid-status': CustomEvent<{ uids: TxSubmissionItem[] }>
+    'subscan-data-updated': CustomEvent<{ keys: PayoutType[] }>
   }
 }
 export interface PageCategory {
