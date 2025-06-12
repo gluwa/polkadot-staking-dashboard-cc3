@@ -33,8 +33,6 @@ import { CloseCanvas, useOverlay } from 'ui-overlay'
 import { planckToUnitBn } from 'utils'
 import { ActiveGraph as ActiveGraphEraPoints } from './EraPoints/ActiveGraph'
 import { InactiveGraph as InactiveGraphEraPoints } from './EraPoints/InactiveGraph'
-import { ActiveGraph as ActiveGraphRewards } from './Rewards/ActiveGraph'
-import { InactiveGraph as InactiveGraphRewards } from './Rewards/InactiveGraph'
 
 export const ValidatorMetrics = () => {
   const { t } = useTranslation()
@@ -196,30 +194,7 @@ export const ValidatorMetrics = () => {
           ref={graphRewardsRef}
           width={graphSizeRewards.width}
           height={graphSizeRewards.height}
-        >
-          {pluginEnabled('staking_api') ? (
-            <ActiveGraphRewards
-              network={network}
-              validator={validator}
-              fromEra={Math.max(activeEra.index - 1, 0)}
-              width={graphSizeRewards.width}
-              height={graphSizeRewards.height}
-            />
-          ) : (
-            <>
-              <StatusLabel
-                status="active_service"
-                statusFor="staking_api"
-                title={t('stakingApiDisabled', { ns: 'pages' })}
-                topOffset="37%"
-              />
-              <InactiveGraphRewards
-                width={graphSizeRewards.width}
-                height={graphSizeRewards.height}
-              />
-            </>
-          )}
-        </GraphInner>
+        ></GraphInner>
         {pluginEnabled('polkawatch') && (
           <>
             <Subheading style={{ marginTop: '1rem' }}>

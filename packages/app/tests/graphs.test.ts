@@ -1,6 +1,7 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only */
 
+import type { SubscanPayout } from 'controllers/Subscan/types'
 import { fromUnixTime, getUnixTime, startOfToday, subDays } from 'date-fns'
 import {
   daysPassed,
@@ -11,24 +12,45 @@ import {
 import { expect, test } from 'vitest'
 
 // payouts that were made 2, 3 and 4 days ago.
-const mockPayouts = [
+const mockPayouts: SubscanPayout[] = [
   {
-    who: '',
-    poolId: 0,
-    reward: '10000000000',
-    timestamp: getUnixTime(subDays(new Date(), 2)),
+    account: '',
+    amount: '10000000000',
+    block_timestamp: getUnixTime(subDays(new Date(), 2)),
+    era: 0,
+    stash: '',
+    validator_stash: '',
+    event_index: '',
+    module_id: '',
+    event_id: '',
+    extrinsic_index: '',
+    invalid_era: false,
   },
   {
-    who: '',
-    poolId: 0,
-    reward: '15000000000',
-    timestamp: getUnixTime(subDays(new Date(), 3)),
+    account: '',
+    amount: '15000000000',
+    block_timestamp: getUnixTime(subDays(new Date(), 3)),
+    era: 0,
+    stash: '',
+    validator_stash: '',
+    event_index: '',
+    module_id: '',
+    event_id: '',
+    extrinsic_index: '',
+    invalid_era: false,
   },
   {
-    who: '',
-    poolId: 0,
-    reward: '5000000000',
-    timestamp: getUnixTime(subDays(new Date(), 4)),
+    account: '',
+    amount: '5000000000',
+    block_timestamp: getUnixTime(subDays(new Date(), 4)),
+    era: 0,
+    stash: '',
+    validator_stash: '',
+    event_index: '',
+    module_id: '',
+    event_id: '',
+    extrinsic_index: '',
+    invalid_era: false,
   },
 ]
 

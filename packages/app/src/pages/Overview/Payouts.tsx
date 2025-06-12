@@ -1,4 +1,4 @@
-// Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
+// Copyright 2024 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { useSize } from '@w3ux/hooks'
@@ -14,6 +14,7 @@ import { useUi } from 'contexts/UI'
 import { formatDistance, fromUnixTime, getUnixTime } from 'date-fns'
 import { useSubscanData } from 'hooks/useSubscanData'
 import { useSyncing } from 'hooks/useSyncing'
+import { CardHeaderWrapper } from 'library/Card/Wrappers'
 import { PayoutBar } from 'library/Graphs/PayoutBar'
 import { PayoutLine } from 'library/Graphs/PayoutLine'
 import { formatRewardsForGraphs, formatSize } from 'library/Graphs/Utils'
@@ -22,13 +23,11 @@ import { StatusLabel } from 'library/StatusLabel'
 import { DefaultLocale, locales } from 'locales'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CardHeader, CardLabel } from 'ui-core/base'
 import { planckToUnitBn } from 'utils'
 
 export const Payouts = () => {
   const { i18n, t } = useTranslation('pages')
   const { network } = useNetwork()
-  const Token = getChainIcons(network).token
   const { units } = getNetworkData(network)
   const { inSetup } = useStaking()
   const { syncing } = useSyncing()
@@ -40,6 +39,7 @@ export const Payouts = () => {
     'poolClaims',
   ])
   const notStaking = !syncing && inSetup()
+  const Token = getChainIcons(network).token
 
   // Get data safely from subscan hook.
   const data = getData(['payouts', 'unclaimedPayouts', 'poolClaims'])
@@ -81,53 +81,59 @@ export const Payouts = () => {
 
   return (
     <>
-      <CardHeader>
-        <h4>{t('overview.recentPayouts')}</h4>
+      <CardHeaderWrapper>
+        <h4>{t('recentPayouts')}</h4>
         <h2>
-          <Token />
+          <Token className="networkIcon" />
           <Odometer
             value={minDecimalPlaces(
               lastReward === null
                 ? '0'
                 : planckToUnitBn(
-                    new BigNumber(lastReward?.amount || 0),
+                    new BigNumber(lastReward.amount),
                     units
                   ).toFormat(),
               2
             )}
           />
-          <CardLabel>
+          <span className="note">
             {lastReward === null ? (
               ''
             ) : (
               <>&nbsp;{formatDistance(formatFrom, formatTo, formatOpts)}</>
             )}
-          </CardLabel>
+          </span>
         </h2>
-      </CardHeader>
+      </CardHeaderWrapper>
       <div className="inner" ref={graphInnerRef} style={{ minHeight }}>
         {!plugins.includes('subscan') ? (
           <StatusLabel
-            status="subscan"
-            title={t('overview.subscanDisabled')}
+            status="active_service"
+            statusFor="subscan"
+            title={t('subscanDisabled')}
             topOffset="37%"
           />
         ) : (
-          <GraphWrapper
-            style={{
-              height: `${height}px`,
-              width: `${width}px`,
-              position: 'absolute',
-              opacity: notStaking ? 0.75 : 1,
-              transition: 'opacity 0.5s',
-            }}
-          >
-            <PayoutBar days={19} height="150px" data={data} />
-            <div style={{ marginTop: '3rem' }}>
-              <PayoutLine days={19} average={10} height="65px" data={data} />
-            </div>
-          </GraphWrapper>
+          <StatusLabel
+            status="sync_or_setup"
+            title={t('notStaking')}
+            topOffset="37%"
+          />
         )}
+        <GraphWrapper
+          style={{
+            height: `${height}px`,
+            width: `${width}px`,
+            position: 'absolute',
+            opacity: notStaking ? 0.75 : 1,
+            transition: 'opacity 0.5s',
+          }}
+        >
+          <PayoutBar days={19} height="150px" data={data} syncing={syncing} />
+          <div style={{ marginTop: '3rem' }}>
+            <PayoutLine days={19} average={10} height="65px" data={data} />
+          </div>
+        </GraphWrapper>
       </div>
     </>
   )

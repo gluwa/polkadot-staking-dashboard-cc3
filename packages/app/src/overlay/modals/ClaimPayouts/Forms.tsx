@@ -6,6 +6,7 @@ import { planckToUnit } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
 import { getNetworkData } from 'consts/util'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
+import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
 import { usePayouts } from 'contexts/Payouts'
 import { Subscan } from 'controllers/Subscan'
@@ -31,6 +32,7 @@ export const Forms = forwardRef(
   ) => {
     const { t } = useTranslation('modals')
     const { network } = useNetwork()
+    const { serviceApi } = useApi()
     const { newBatchCall } = useBatchCall()
     const { setModalStatus } = useOverlay().modal
     const { activeAddress } = useActiveAccounts()
@@ -59,7 +61,7 @@ export const Forms = forwardRef(
           return acc
         }
         paginatedValidators.forEach(([page, v]) => {
-          const tx = new PayoutStakersByPage(network, v, Number(era), page).tx()
+          const tx = serviceApi.tx.payoutStakersByPage(v, Number(era), page)
 
           if (tx) {
             acc.push()
@@ -123,6 +125,12 @@ export const Forms = forwardRef(
       activeAddress,
       false,
       submitExtrinsic.proxySupported
+    )
+
+    // Ensure payouts value is valid
+    useEffect(
+      () => setValid(totalPayout.isGreaterThan(0) && totalPayoutValidators > 0),
+      [payouts]
     )
 
     return (

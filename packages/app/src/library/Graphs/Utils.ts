@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import BigNumber from 'bignumber.js'
+import type { AnyApi } from 'common-types'
 import { MaxPayoutDays } from 'consts'
-import type { SubscanPayout } from 'controllers/Subscan/types'
 import {
   addDays,
   differenceInDays,
@@ -16,7 +16,6 @@ import {
 import type { AnyJson } from 'types'
 import { planckToUnitBn } from 'utils'
 import type { PayoutDayCursor } from './types'
-import { AnyApi } from 'common-types'
 
 // Given payouts, calculate daily income and fill missing days with zero rewards
 export const calculateDailyPayouts = (
@@ -98,7 +97,7 @@ export const calculateDailyPayouts = (
       }
     } else {
       // in same day. Aadd payout reward to current payout cursor
-      curPayout.amount = curPayout.amount.plus(payout.reward)
+      curPayout.amount = curPayout.amount.plus(new BigNumber(payout.amount))
     }
 
     // If only 1 payout exists, or at the last unresolved payout, exit here
@@ -183,9 +182,9 @@ export const formatRewardsForGraphs = (
   fromDate: Date,
   days: number,
   units: number,
-  payouts: SubscanPayout[] | undefined,
-  poolClaims: SubscanPayout[] | undefined,
-  unclaimedPayouts: SubscanPayout[] | undefined
+  payouts: AnyApi,
+  poolClaims: AnyApi,
+  unclaimedPayouts: AnyApi
 ) => {
   // Set the from date to the start of the next day
   fromDate.setDate(fromDate.getDate() + 1)
@@ -224,7 +223,7 @@ export const formatRewardsForGraphs = (
 //
 // Calls the relevant functions on raw payouts to format them correctly
 const processPayouts = (
-  payouts: SubscanPayout[] | undefined,
+  payouts: AnyApi,
   fromDate: Date,
   days: number,
   units: number,
@@ -290,10 +289,7 @@ const getPreMaxDaysPayouts = (
 // Combine payouts and pool claims
 //
 // Combines payouts and pool claims into daily records
-export const combineRewards = (
-  payouts: AnyApi[],
-  poolClaims: AnyApi[]
-) => {
+export const combineRewards = (payouts: AnyApi[], poolClaims: AnyApi[]) => {
   // we first check if actual payouts exist, e.g. there are non-zero payout
   // amounts present in either payouts or pool claims.
   const poolClaimExists = poolClaims.find((p) => Number(p.amount) > 0) || null
@@ -377,9 +373,11 @@ export const combineRewards = (
 export const getLatestReward = (payouts: AnyApi, poolClaims: AnyApi) => {
   // Get most recent payout
   const payoutExists =
-    payouts.find((p: AnyApi) => new BigNumber(p.amount).isGreaterThan(0)) ?? null
+    payouts.find((p: AnyApi) => new BigNumber(p.amount).isGreaterThan(0)) ??
+    null
   const poolClaimExists =
-    poolClaims.find((p: AnyApi) => new BigNumber(p.amount).isGreaterThan(0)) ?? null
+    poolClaims.find((p: AnyApi) => new BigNumber(p.amount).isGreaterThan(0)) ??
+    null
 
   // Calculate which payout was most recent
   let lastReward = null
@@ -491,14 +489,11 @@ export const fillGapDays = (payouts: AnyApi[], fromDate: Date) => {
 }
 
 // Utiltiy: normalise payout timestamps to start of day
-export const normalisePayouts = (payouts: SubscanPayout[] | undefined): AnyApi => {
-  if (payouts) {
-    payouts.map((p) => ({
-      ...p,
-      block_timestamp: getUnixTime(startOfDay(fromUnixTime(p.block_timestamp))),
-    }))
-  }
-}
+export const normalisePayouts = (payouts: AnyApi) =>
+  payouts.map((p: AnyApi) => ({
+    ...p,
+    block_timestamp: getUnixTime(startOfDay(fromUnixTime(p.block_timestamp))),
+  }))
 
 // Utility: days passed since 2 dates
 export const daysPassed = (from: Date, to: Date) =>

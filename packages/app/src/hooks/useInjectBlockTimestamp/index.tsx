@@ -1,8 +1,8 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { useApi } from 'contexts/Api'
 import type { AnyApi } from 'common-types'
+import { useApi } from 'contexts/Api'
 import { useErasToTimeLeft } from '../useErasToTimeLeft'
 
 export const useInjectBlockTimestamp = () => {
