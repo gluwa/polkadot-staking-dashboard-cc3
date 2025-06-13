@@ -23,6 +23,8 @@ export class Subscan {
     rewardSlash: '/api/v2/scan/account/reward_slash',
   }
 
+  static ApiSubscanKey = 'd37149339f64775155a82a53f4253b27'
+
   // Total amount of requests that can be made in 1 second.
   static TOTAL_REQUESTS_PER_SECOND = 5
 
@@ -311,6 +313,7 @@ export class Subscan {
     const res: Response = await fetch(this.getEndpoint() + endpoint, {
       headers: {
         'Content-Type': 'application/json',
+        'X-API-Key': this.ApiSubscanKey,
       },
       body: JSON.stringify(body),
       method: 'POST',
