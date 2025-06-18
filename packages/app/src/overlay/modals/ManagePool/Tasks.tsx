@@ -3,6 +3,7 @@
 
 import { useApi } from 'contexts/Api'
 import { useActivePool } from 'contexts/Pools/ActivePool'
+import { usePoolPerformance } from 'contexts/Pools/PoolPerformance'
 import { Warning } from 'library/Form/Warning'
 import type { ForwardedRef } from 'react'
 import { forwardRef } from 'react'
@@ -19,9 +20,10 @@ export const Tasks = forwardRef(
     const { openCanvas } = useOverlay().canvas
     const { globalMaxCommission } = useApi().poolsConfig
     const { activePool, isOwner, isBouncer } = useActivePool()
-
+    const { startPoolRewardPointsFetch } = usePoolPerformance()
     const poolLocked = activePool?.bondedPool?.state === 'Blocked'
     const poolDestroying = activePool?.bondedPool?.state === 'Destroying'
+    const performanceKey = `pool_page_standalone_${activePool?.id}`
 
     return (
       <ContentWrapper>
@@ -37,12 +39,16 @@ export const Tasks = forwardRef(
             )}
             <ButtonOption
               onClick={() => {
+                startPoolRewardPointsFetch(performanceKey, [
+                  activePool?.addresses.stash || '',
+                ])
                 setModalStatus('closing')
                 openCanvas({
                   key: 'Pool',
                   options: {
                     providedPool: {
                       id: activePool?.id,
+                      performanceBatchKey: performanceKey,
                     },
                   },
                   size: 'xl',
