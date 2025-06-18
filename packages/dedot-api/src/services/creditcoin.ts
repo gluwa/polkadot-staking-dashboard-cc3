@@ -257,6 +257,8 @@ export class CreditcoinService
         await query.erasValidatorPrefs(this.apiRelay, era, address),
       bondedMulti: async (addresses) =>
         await query.bondedMulti(this.apiRelay, addresses),
+      erasRewardPointsMulti: async (eras) =>
+        await query.erasRewardPointsMulti(this.apiRelay, eras),
     },
     runtimeApi: {
       balanceToPoints: async (poolId, amount) =>

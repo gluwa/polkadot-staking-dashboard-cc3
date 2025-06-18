@@ -14,11 +14,15 @@ export interface ValidatorsContextInterface {
   avgCommission: number
   sessionValidators: string[]
   validatorsFetched: Sync
+  eraPointsBoundaries: EraPointsBoundaries
+  validatorEraPointsHistory: Record<string, ValidatorEraPointHistory>
+  erasRewardPointsFetched: Sync
   averageEraValidatorReward: AverageEraValidatorReward
   formatWithPrefs: (addresses: string[]) => Validator[]
   getValidatorTotalStake: (address: string) => bigint
   getValidatorRank: (address: string) => number | undefined
   getValidatorRankSegment: (address: string) => number
+  erasRewardPoints: ErasRewardPoints
 }
 
 export interface Validators {
@@ -30,6 +34,18 @@ export interface AverageEraValidatorReward {
   days: number
   reward: BigNumber
 }
+
+export interface ValidatorEraPointHistory {
+  eras: Record<string, BigNumber>
+  totalPoints: BigNumber
+  rank?: number
+  quartile?: number
+}
+
+export type EraPointsBoundaries = {
+  high: BigNumber
+  low: BigNumber
+} | null
 
 export interface FavoriteValidatorsContextInterface {
   addFavorite: (address: string) => void
@@ -50,4 +66,11 @@ export interface LocalValidatorEntriesData {
 
 export type ValidatorListEntry = Validator & {
   validatorStatus: ValidatorStatus
+}
+
+export type ErasRewardPoints = Record<string, EraRewardPoints>
+
+export interface EraRewardPoints {
+  total: string
+  individual: Record<string, string>
 }

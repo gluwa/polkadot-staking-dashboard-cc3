@@ -3,7 +3,6 @@
 
 import { useHelp } from 'contexts/Help'
 import { CardWrapper } from 'library/Card/Wrappers'
-import { getIdentityDisplay } from 'library/List/Utils'
 import { CopyAddress } from 'library/ListItem/Buttons/CopyAddress'
 import { useTranslation } from 'react-i18next'
 import { ButtonHelp } from 'ui-buttons'
@@ -12,10 +11,7 @@ import { Identity } from 'ui-identity'
 import type { OverviewSectionProps } from '../types'
 import { AddressesWrapper } from '../Wrappers'
 
-export const Roles = ({
-  bondedPool,
-  roleIdentities: { identities, supers },
-}: OverviewSectionProps) => {
+export const Roles = ({ bondedPool }: OverviewSectionProps) => {
   const { t } = useTranslation('pages')
   const { openHelp } = useHelp()
   const iconSize = '3rem'
@@ -24,27 +20,6 @@ export const Roles = ({
   const nominatorAddress = bondedPool?.roles?.nominator || ''
   const bouncerAddress = bondedPool?.roles?.bouncer || ''
   const depositorAddress = bondedPool?.roles?.depositor || ''
-
-  // Get formatted role identity data
-  const rootIdentity = getIdentityDisplay(
-    identities[rootAddress],
-    supers[rootAddress]
-  )?.data?.display
-
-  const nominatorIdentity = getIdentityDisplay(
-    identities[nominatorAddress],
-    supers[nominatorAddress]
-  )?.data?.display
-
-  const bouncerIdentity = getIdentityDisplay(
-    identities[bouncerAddress],
-    supers[bouncerAddress]
-  )?.data?.display
-
-  const depositorIdentity = getIdentityDisplay(
-    identities[depositorAddress],
-    supers[depositorAddress]
-  )?.data?.display
 
   return (
     <div>
@@ -61,7 +36,6 @@ export const Roles = ({
               <Identity
                 title={t('root')}
                 address={rootAddress}
-                identity={rootIdentity}
                 Action={<CopyAddress address={rootAddress} />}
                 iconSize={iconSize}
               />
@@ -72,7 +46,6 @@ export const Roles = ({
               <Identity
                 title={t('nominator')}
                 address={nominatorAddress}
-                identity={nominatorIdentity}
                 Action={<CopyAddress address={nominatorAddress} />}
                 iconSize={iconSize}
               />
@@ -83,7 +56,6 @@ export const Roles = ({
               <Identity
                 title={t('bouncer')}
                 address={bouncerAddress}
-                identity={bouncerIdentity}
                 Action={<CopyAddress address={bouncerAddress} />}
                 iconSize={iconSize}
               />
@@ -94,7 +66,6 @@ export const Roles = ({
               <Identity
                 title={t('depositor')}
                 address={depositorAddress}
-                identity={depositorIdentity}
                 Action={<CopyAddress address={depositorAddress} />}
                 iconSize={iconSize}
               />

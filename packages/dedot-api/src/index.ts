@@ -28,10 +28,8 @@ export const initDedotService = async () => {
 
       const { network, ...rest } = cur
       // Type narrow services and apis
-      if (network === 'creditcoin3-dev') {
-        const { Service, apis, ids } = await getDefaultService(network, rest)
-        service = new Service(cur, ids, ...apis)
-      }
+      const { Service, apis, ids } = await getDefaultService(network, rest)
+      service = new Service(cur, ids, ...apis)
 
       // Expose service interface
       setServiceInterface(service.interface)

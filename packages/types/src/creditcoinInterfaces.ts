@@ -25,6 +25,9 @@ export interface CreditcoinServiceInterface {
     erasValidatorRewardMulti: (
       eras: number[]
     ) => Promise<(bigint | undefined)[]>
+    erasRewardPointsMulti: (
+      eras: number[]
+    ) => Promise<(PalletStakingEraRewardPoints | undefined)[]>
     bondedPool: (poolId: number) => Promise<BondedPoolQuery | undefined>
     bondedPoolEntries: () => Promise<[number, BondedPoolQuery][]>
     erasStakersOverviewEntries: (
@@ -46,7 +49,9 @@ export interface CreditcoinServiceInterface {
       addresses: string[]
     ) => Promise<PalletStakingValidatorPrefs[]>
     claimedRewards: (era: number, address: string) => Promise<number[]>
-    eraRewardPoints: (era: number) => Promise<PalletStakingEraRewardPoints | undefined>
+    eraRewardPoints: (
+      era: number
+    ) => Promise<PalletStakingEraRewardPoints | undefined>
     erasValidatorPrefs: (
       era: number,
       address: string

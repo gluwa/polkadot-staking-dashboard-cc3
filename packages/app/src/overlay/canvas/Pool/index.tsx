@@ -4,6 +4,7 @@
 import { useNetwork } from 'contexts/Network'
 import { usePlugins } from 'contexts/Plugins'
 import { useBondedPools } from 'contexts/Pools/BondedPools'
+import { usePoolPerformance } from 'contexts/Pools/PoolPerformance'
 import { fetchPoolCandidates } from 'plugin-staking-api'
 import { useEffect, useMemo, useState } from 'react'
 import type { BondedPool } from 'types'
@@ -13,7 +14,6 @@ import { Header } from './Header'
 import { Nominations } from './Nominations'
 import { Overview } from './Overview'
 import { Preloader } from './Preloader'
-import type { RoleIdentities } from './types'
 
 export const Pool = () => {
   const {
@@ -22,6 +22,7 @@ export const Pool = () => {
   const { network } = useNetwork()
   const { pluginEnabled } = usePlugins()
   const { poolsMetaData, bondedPools } = useBondedPools()
+  const { getPoolPerformanceTask } = usePoolPerformance()
 
   // Store latest pool candidates
   const [poolCandidates, setPoolCandidates] = useState<number[]>([])
@@ -29,18 +30,19 @@ export const Pool = () => {
   // Get the provided pool id and performance batch key from options, if available
   const providedPool = options?.providedPool
   const providedPoolId = providedPool?.id || null
+  const performanceKey =
+    providedPoolId && providedPool?.performanceBatchKey
+      ? providedPool?.performanceBatchKey
+      : 'pool_join'
+
+  // Get the pool performance task to determine if performance data is ready.
+  const poolJoinPerformanceTask = getPoolPerformanceTask(performanceKey)
 
   // Whether performance data is ready
   const performanceDataReady = !!providedPoolId || poolCandidates.length > 0
 
   // The active canvas tab.
   const [activeTab, setActiveTab] = useState<number>(0)
-
-  // Store any identity data for pool roles
-  const [roleIdentities] = useState<RoleIdentities>({
-    identities: {},
-    supers: {},
-  })
 
   // Gets pool candidates for joining pool. If Staking API is disabled, fall back to subset of open
   // pools
@@ -116,7 +118,11 @@ export const Pool = () => {
             providedPoolId={providedPoolId}
           />
           {activeTab === 0 && (
-            <Overview bondedPool={bondedPool} roleIdentities={roleIdentities} />
+            <Overview
+              bondedPool={bondedPool}
+              performanceKey={performanceKey}
+              graphSyncing={poolJoinPerformanceTask.status !== 'synced'}
+            />
           )}
           {activeTab === 1 && (
             <Nominations

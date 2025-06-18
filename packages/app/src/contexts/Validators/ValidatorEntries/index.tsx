@@ -5,6 +5,7 @@ import { createSafeContext, useEffectIgnoreInitial } from '@w3ux/hooks'
 import type { Sync } from '@w3ux/types'
 import { shuffle } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
+import { MaxEraRewardPointsEras } from 'consts'
 import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
 import { useStaking } from 'contexts/Staking'
@@ -16,6 +17,7 @@ import { useErasPerDay } from 'hooks/useErasPerDay'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import type {
+  AnyJson,
   IdentityOf,
   SuperIdentity,
   Validator,
@@ -23,7 +25,10 @@ import type {
 } from 'types'
 import { perbillToPercent } from 'utils'
 import type {
+  EraPointsBoundaries,
+  ErasRewardPoints,
   ValidatorAddresses,
+  ValidatorEraPointHistory,
   ValidatorListEntry,
   Validators,
   ValidatorsContextInterface,
@@ -31,6 +36,7 @@ import type {
 import { getLocalEraValidators, setLocalEraValidators } from '../Utils'
 import {
   defaultAverageEraValidatorReward,
+  defaultEraPointsBoundaries,
   defaultValidatorsData,
 } from './defaults'
 
@@ -73,11 +79,155 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   // Stores the average network commission rate
   const [avgCommission, setAvgCommission] = useState<number>(0)
 
+  // Track whether the validator list has been fetched
+  const [erasRewardPointsFetched, setErasRewawrdPointsFetched] =
+    useState<Sync>('unsynced')
+
+  // Store era reward points, keyed by era
+  const [erasRewardPoints, setErasRewardPoints] = useState<ErasRewardPoints>({})
+
+  // Store validator era points history and metrics
+  const [validatorEraPointsHistory, setValidatorEraPointsHistory] = useState<
+    Record<string, ValidatorEraPointHistory>
+  >({})
+
+  // Store era point high and low for `MaxEraPointsEras` eras
+  const [eraPointsBoundaries, setEraPointsBoundaries] =
+    useState<EraPointsBoundaries>(defaultEraPointsBoundaries)
+
   // Average rerward rate
   const [averageEraValidatorReward, setAverageEraValidatorReward] = useState<{
     days: number
     reward: BigNumber
   }>(defaultAverageEraValidatorReward)
+
+  // Processes reward points for a given era
+  const processEraRewardPoints = (result: AnyJson, era: BigNumber) => {
+    if (erasRewardPoints[era.toString()]) {
+      return erasRewardPoints[era.toString()]
+    }
+
+    return {
+      total: result.total.toString(),
+      individual: Object.fromEntries(
+        result.individual.map(([key, value]: [number, string]) => [
+          key,
+          (value as string).toString(),
+        ])
+      ),
+    }
+  }
+
+  // Get quartile data for validator performance data
+  const getQuartile = (qIndex: number, total: number) => {
+    const q1 = Math.ceil(total * 0.25)
+    const q2 = Math.ceil(total * 0.5)
+    const q3 = Math.ceil(total * 0.75)
+
+    if (qIndex <= q1) {
+      return 25
+    }
+    if (qIndex <= q2) {
+      return 50
+    }
+    if (qIndex <= q3) {
+      return 75
+    }
+    return 100
+  }
+
+  // Fetches era reward points for eligible eras
+  const fetchErasRewardPoints = async () => {
+    if (
+      !isReady ||
+      activeEra.index === 0 ||
+      erasRewardPointsFetched !== 'unsynced'
+    ) {
+      return
+    }
+
+    setErasRewawrdPointsFetched('syncing')
+
+    // start fetching from the current era
+    let currentEra = BigNumber.max(activeEra.index - 1, 1)
+    const endEra = BigNumber.max(activeEra.index - MaxEraRewardPointsEras, 1)
+
+    // Introduce additional safeguard againt looping forever
+    const totalEras = new BigNumber(MaxEraRewardPointsEras)
+    let erasProcessed = new BigNumber(0)
+
+    // Iterate eras and process reward points
+    const eras = []
+    do {
+      eras.push(currentEra)
+      currentEra = currentEra.minus(1)
+      erasProcessed = erasProcessed.plus(1)
+    } while (
+      currentEra.isGreaterThanOrEqualTo(endEra) &&
+      erasProcessed.isLessThan(totalEras)
+    )
+
+    const results = await serviceApi.query.erasRewardPointsMulti(
+      eras.map((e) => Number(e))
+    )
+
+    // Make calls and format reward point results
+    const newErasRewardPoints: ErasRewardPoints = {}
+    let i = 0
+    for (const result of results) {
+      const formatted = processEraRewardPoints(result, eras[i])
+      if (formatted) {
+        newErasRewardPoints[eras[i].toString()] = formatted
+      }
+      i++
+    }
+
+    let newEraPointsHistory: Record<string, ValidatorEraPointHistory> = {}
+
+    // Calculate points per era and total points per era of each validator
+    Object.entries(newErasRewardPoints).forEach(([era, { individual }]) => {
+      Object.entries(individual).forEach(([address, points]) => {
+        if (!newEraPointsHistory[address]) {
+          newEraPointsHistory[address] = {
+            eras: {},
+            totalPoints: new BigNumber(0),
+          }
+        } else {
+          newEraPointsHistory[address].eras[era] = new BigNumber(points)
+          newEraPointsHistory[address].totalPoints =
+            newEraPointsHistory[address].totalPoints.plus(points)
+        }
+      })
+    })
+
+    // Iterate `newEraPointsHistory` and re-order the object based on its totalPoints, highest
+    // first
+    newEraPointsHistory = Object.fromEntries(
+      Object.entries(newEraPointsHistory)
+        .sort(
+          (
+            a: [string, ValidatorEraPointHistory],
+            b: [string, ValidatorEraPointHistory]
+          ) => a[1].totalPoints.minus(b[1].totalPoints).toNumber()
+        )
+        .reverse()
+    )
+
+    const totalEntries = Object.entries(newEraPointsHistory).length
+    let j = 0
+    newEraPointsHistory = Object.fromEntries(
+      Object.entries(newEraPointsHistory).map(([k, v]) => {
+        j++
+        return [k, { ...v, rank: j, quartile: getQuartile(j, totalEntries) }]
+      })
+    )
+
+    // Commit results to state
+    setErasRewardPoints({
+      ...newErasRewardPoints,
+    })
+    setValidatorEraPointsHistory(newEraPointsHistory)
+  }
 
   // Fetch validator entries and format the returning data
   const getValidatorEntries = async () => {
@@ -291,6 +441,33 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     setAverageEraValidatorReward({ days, reward })
   }
 
+  // Gets the highest and lowest (non-zero) era points earned `MaxEraRewardPointsEras` timeframe
+  const calculateEraPointsBoundaries = () => {
+    let high: BigNumber | null = null
+    let low: BigNumber | null = null
+
+    Object.entries(erasRewardPoints).forEach(([, { individual }]) => {
+      for (const [, points] of Object.entries(individual)) {
+        const p = new BigNumber(points)
+
+        if (p.isGreaterThan(high || 0)) {
+          high = p
+        }
+        if (low === null) {
+          low = p
+        } else if (p.isLessThan(low) && !p.isZero()) {
+          low = p
+        }
+      }
+    })
+
+    setEraPointsBoundaries({
+      high: high || new BigNumber(0),
+      low: low || new BigNumber(0),
+    })
+    setErasRewawrdPointsFetched('synced')
+  }
+
   const getValidatorRank = (validator: string): number | undefined => {
     const rank = getValidatorRankBus(validator)
     if (!rank) {
@@ -327,12 +504,17 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isReady && activeEra.index > 0) {
       fetchValidators()
+      fetchErasRewardPoints()
     }
-  }, [validators.status, isReady, activeEra])
+  }, [validators.status, erasRewardPointsFetched, isReady, activeEra])
 
   // Mark unsynced and fetch session validators and average reward when activeEra changes
   useEffectIgnoreInitial(() => {
     if (isReady && activeEra.index > 0) {
+      if (erasRewardPointsFetched === 'synced') {
+        setErasRewawrdPointsFetched('unsynced')
+      }
+
       if (validators.status === 'synced') {
         setValidatorsFetched('unsynced')
       }
@@ -341,6 +523,12 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isReady, activeEra])
 
+  // Fetch era points boundaries when `erasRewardPoints` ready
+  useEffectIgnoreInitial(() => {
+    if (isReady && Object.values(erasRewardPoints).length) {
+      calculateEraPointsBoundaries()
+    }
+  }, [isReady, erasRewardPoints])
   return (
     <ValidatorsContext.Provider
       value={{
@@ -352,6 +540,10 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
         avgCommission,
         sessionValidators,
         validatorsFetched: validators.status,
+        erasRewardPoints,
+        eraPointsBoundaries,
+        validatorEraPointsHistory,
+        erasRewardPointsFetched,
         averageEraValidatorReward,
         formatWithPrefs,
         getValidatorTotalStake,

@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { Dispatch, SetStateAction } from 'react'
-import type { BondedPool, IdentityOf, SuperIdentity } from 'types'
+import type {
+  BondedPool,
+  IdentityOf,
+  PoolRewardPointsKey,
+  SuperIdentity,
+} from 'types'
 
 export interface HeaderProps {
   activeTab: number
@@ -22,7 +27,8 @@ export interface NominationsProps {
 
 export interface OverviewSectionProps {
   bondedPool: BondedPool
-  roleIdentities: RoleIdentities
+  performanceKey: PoolRewardPointsKey
+  graphSyncing: boolean
 }
 
 export type RoleIdentities = {

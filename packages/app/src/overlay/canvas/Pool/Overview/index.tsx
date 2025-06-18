@@ -9,7 +9,7 @@ import { useStaking } from 'contexts/Staking'
 import { GraphContainer, Interface } from 'ui-core/canvas'
 import type { OverviewSectionProps } from '../types'
 import { Addresses } from './Addresses'
-// import { Performance } from './Performance'
+import { Performance } from './Performance'
 import { Roles } from './Roles'
 import { Stats } from './Stats'
 
@@ -29,7 +29,7 @@ export const Overview = (props: OverviewSectionProps) => {
         <>
           <GraphContainer>
             <Stats {...props} />
-            {/* <Performance {...props} /> */}
+            <Performance {...props} />
           </GraphContainer>
           <Addresses {...props} />
           <Roles {...props} />
