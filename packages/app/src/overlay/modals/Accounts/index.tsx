@@ -145,7 +145,9 @@ export const Accounts = () => {
         {nominatingAndPool.length ? (
           <>
             <AccountSeparator />
-            <ActionItem text={t('nominatingAndInPool')} />
+            <ActionItem
+              text={t('nominatingAnd', { ns: 'pages' }) + ' ' + t('inPool')}
+            />
             {nominatingAndPool.map(({ address, source, delegates }, i) => (
               <Fragment key={`acc_nominating_and_pool_${i}`}>
                 <AccountButton
