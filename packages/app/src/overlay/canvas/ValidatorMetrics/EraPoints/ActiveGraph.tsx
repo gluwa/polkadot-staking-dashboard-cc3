@@ -6,7 +6,7 @@ import { Subscan } from 'controllers/Subscan'
 import type { SubscanEraPoints } from 'controllers/Subscan/types'
 import { EraPointsLine } from 'library/Graphs/EraPointsLine'
 import { StatusLabel } from 'library/StatusLabel'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { InactiveGraph } from './InactiveGraph'
 
@@ -16,31 +16,29 @@ interface Props {
   width: string | number
   height: string | number
 }
+
 export const ActiveGraph = ({ validator, fromEra, width, height }: Props) => {
-  const [list, setList] = useState<SubscanEraPoints[]>([])
+  const [eraPoints, setEraPoints] = useState<SubscanEraPoints[]>([])
   const { t } = useTranslation('pages')
   const { plugins } = usePlugins()
+  const isSubscanEnabled = plugins.includes('subscan')
 
-  const handleEraPoints = async () => {
-    setList(await Subscan.handleFetchEraPoints(validator, fromEra))
-  }
+  const fetchEraPoints = useCallback(async () => {
+    const result = await Subscan.handleFetchEraPoints(validator, fromEra)
+    setEraPoints(result)
+  }, [validator, fromEra])
 
   useEffect(() => {
-    if (plugins.includes('subscan')) {
-      handleEraPoints()
+    if (isSubscanEnabled) {
+      fetchEraPoints()
     }
-  }, [validator, fromEra, plugins.includes('subscan')])
-  const sorted = [...list].sort((a, b) => a.era - b.era)
+  }, [fetchEraPoints, isSubscanEnabled])
+
+  const sortedEraPoints = eraPoints.slice().sort((a, b) => a.era - b.era)
 
   return (
-    <div
-      className="inner"
-      style={{
-        width,
-        height,
-      }}
-    >
-      {!plugins.includes('subscan') ? (
+    <div className="inner" style={{ width, height }}>
+      {!isSubscanEnabled ? (
         <>
           <StatusLabel
             status="active_service"
@@ -53,7 +51,7 @@ export const ActiveGraph = ({ validator, fromEra, width, height }: Props) => {
       ) : (
         <EraPointsLine
           syncing={false}
-          entries={sorted}
+          entries={sortedEraPoints}
           width={width}
           height={height}
         />
