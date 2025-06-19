@@ -1,43 +1,63 @@
-// Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
+// Copyright 2024 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
+import { usePlugins } from 'contexts/Plugins'
+import { Subscan } from 'controllers/Subscan'
+import type { SubscanEraPoints } from 'controllers/Subscan/types'
 import { EraPointsLine } from 'library/Graphs/EraPointsLine'
-import { useValidatorEraPoints } from 'plugin-staking-api'
-import type { NetworkId } from 'types'
+import { StatusLabel } from 'library/StatusLabel'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { InactiveGraph } from './InactiveGraph'
 
 interface Props {
-  network: NetworkId
   validator: string
   fromEra: number
   width: string | number
   height: string | number
 }
-export const ActiveGraph = ({
-  network,
-  validator,
-  fromEra,
-  width,
-  height,
-}: Props) => {
-  const { data, loading, error } = useValidatorEraPoints({
-    network,
-    validator,
-    fromEra,
-  })
+export const ActiveGraph = ({ validator, fromEra, width, height }: Props) => {
+  const [list, setList] = useState<SubscanEraPoints[]>([])
+  const { t } = useTranslation('pages')
+  const { plugins } = usePlugins()
 
-  const list =
-    loading || error || data?.validatorEraPoints === undefined
-      ? []
-      : data.validatorEraPoints
+  const handleEraPoints = async () => {
+    setList(await Subscan.handleFetchEraPoints(validator, fromEra))
+  }
 
+  useEffect(() => {
+    if (plugins.includes('subscan')) {
+      handleEraPoints()
+    }
+  }, [validator, fromEra, plugins.includes('subscan')])
   const sorted = [...list].sort((a, b) => a.era - b.era)
 
   return (
-    <EraPointsLine
-      syncing={loading}
-      entries={sorted}
-      width={width}
-      height={height}
-    />
+    <div
+      className="inner"
+      style={{
+        width,
+        height,
+      }}
+    >
+      {!plugins.includes('subscan') ? (
+        <>
+          <StatusLabel
+            status="active_service"
+            statusFor="subscan"
+            title={t('subscanDisabled')}
+            topOffset="37%"
+          />
+          <InactiveGraph width={width} height={height} />
+        </>
+      ) : (
+        <EraPointsLine
+          syncing={false}
+          entries={sorted}
+          width={width}
+          height={height}
+        />
+      )}
+    </div>
   )
 }

@@ -56,3 +56,6 @@ export type BulletType = 'success' | 'accent' | 'warning' | 'danger'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyApi = any
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnySubscan = any

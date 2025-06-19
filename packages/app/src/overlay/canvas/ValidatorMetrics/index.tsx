@@ -9,13 +9,11 @@ import { getNetworkData } from 'consts/util'
 import { useApi } from 'contexts/Api'
 import { useHelp } from 'contexts/Help'
 import { useNetwork } from 'contexts/Network'
-import { usePlugins } from 'contexts/Plugins'
 import { useStaking } from 'contexts/Staking'
 import { useUi } from 'contexts/UI'
 import { useValidators } from 'contexts/Validators/ValidatorEntries'
 import { formatSize } from 'library/Graphs/Utils'
-import { StatusLabel } from 'library/StatusLabel'
-import { ValidatorGeo } from 'overlay/canvas/ValidatorMetrics/ValidatorGeo'
+// import { StatusLabel } from 'library/StatusLabel'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ButtonHelp } from 'ui-buttons'
@@ -32,7 +30,6 @@ import {
 import { CloseCanvas, useOverlay } from 'ui-overlay'
 import { planckToUnitBn } from 'utils'
 import { ActiveGraph as ActiveGraphEraPoints } from './EraPoints/ActiveGraph'
-import { InactiveGraph as InactiveGraphEraPoints } from './EraPoints/InactiveGraph'
 
 export const ValidatorMetrics = () => {
   const { t } = useTranslation()
@@ -46,7 +43,6 @@ export const ValidatorMetrics = () => {
   const { activeEra } = useApi()
   const { openHelp } = useHelp()
   const { containerRefs } = useUi()
-  const { pluginEnabled } = usePlugins()
   const { getValidators } = useValidators()
   const { unit, units } = getNetworkData(network)
 
@@ -88,13 +84,6 @@ export const ValidatorMetrics = () => {
     outerElement: containerRefs?.mainInterface,
   })
   const graphSizeEraPoints = formatSize(sizeEraPoints, GRAPH_HEIGHT)
-
-  // token earned graph ref & sizing
-  const graphRewardsRef = useRef<HTMLDivElement | null>(null)
-  const sizeRewards = useSize(graphRewardsRef, {
-    outerElement: containerRefs?.mainInterface,
-  })
-  const graphSizeRewards = formatSize(sizeRewards, GRAPH_HEIGHT)
 
   return (
     <Main>
@@ -157,52 +146,13 @@ export const ValidatorMetrics = () => {
           width={graphSizeEraPoints.width}
           height={graphSizeEraPoints.height}
         >
-          {pluginEnabled('staking_api') ? (
-            <ActiveGraphEraPoints
-              network={network}
-              validator={validator}
-              fromEra={Math.max(activeEra.index - 1, 0)}
-              width={graphSizeEraPoints.width}
-              height={graphSizeEraPoints.height}
-            />
-          ) : (
-            <>
-              <StatusLabel
-                status="active_service"
-                statusFor="staking_api"
-                title={t('stakingApiDisabled', { ns: 'pages' })}
-                topOffset="37%"
-              />
-              <InactiveGraphEraPoints
-                width={graphSizeEraPoints.width}
-                height={graphSizeEraPoints.height}
-              />
-            </>
-          )}
+          <ActiveGraphEraPoints
+            validator={validator}
+            fromEra={Math.max(activeEra.index - 1, 0)}
+            width={graphSizeEraPoints.width}
+            height={graphSizeEraPoints.height}
+          />
         </GraphInner>
-        <Subheading>
-          <h3>
-            {t('rewardHistory', { ns: 'app' })}
-            <ButtonHelp
-              outline
-              marginLeft
-              onClick={() => openHelp('Validator Reward History')}
-            />
-          </h3>
-        </Subheading>
-        <GraphInner
-          ref={graphRewardsRef}
-          width={graphSizeRewards.width}
-          height={graphSizeRewards.height}
-        ></GraphInner>
-        {pluginEnabled('polkawatch') && (
-          <>
-            <Subheading style={{ marginTop: '1rem' }}>
-              <h3>{t('decentralization', { ns: 'app' })}</h3>
-            </Subheading>
-            <ValidatorGeo address={validator} />
-          </>
-        )}
       </div>
     </Main>
   )

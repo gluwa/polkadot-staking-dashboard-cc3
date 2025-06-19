@@ -14,10 +14,8 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
+import type { AnySubscan } from 'common-types'
 import { useThemeValues } from 'contexts/ThemeValues'
-import { format, fromUnixTime } from 'date-fns'
-import { DefaultLocale, locales } from 'locales'
-import type { ValidatorEraPoints } from 'plugin-staking-api/types'
 import { Line } from 'react-chartjs-2'
 import { useTranslation } from 'react-i18next'
 import type { AnyJson } from 'types'
@@ -40,18 +38,18 @@ export const EraPointsLine = ({
   width,
   height,
 }: {
-  entries: ValidatorEraPoints[]
+  entries: AnySubscan[]
   syncing: boolean
   width: string | number
   height: string | number
 }) => {
-  const { i18n, t } = useTranslation()
+  const { t } = useTranslation()
   const { getThemeValue } = useThemeValues()
 
   // Format reward points as an array of strings, or an empty array if syncing
   const dataset = syncing
     ? []
-    : entries.map((entry) => new BigNumber(entry.points).toString())
+    : entries.map((entry) => new BigNumber(entry.reward_point).toString())
 
   // Use primary color for line
   const color = getThemeValue('--accent-color-primary')
@@ -88,7 +86,7 @@ export const EraPointsLine = ({
         },
         title: {
           ...titleStyle,
-          text: `${t('date', { ns: 'app' })}`,
+          text: `${t('era', { ns: 'app' })}`,
         },
       },
       y: {
@@ -141,12 +139,7 @@ export const EraPointsLine = ({
   }
 
   const data = {
-    labels: entries.map(({ start }: { start: number }) => {
-      const dateObj = format(fromUnixTime(start), 'do MMM', {
-        locale: locales[i18n.resolvedLanguage ?? DefaultLocale].dateFormat,
-      })
-      return `${dateObj}`
-    }),
+    labels: entries.map(({ era }) => era),
     datasets: [
       {
         label: t('era', { ns: 'app' }),
