@@ -1,7 +1,6 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import type { ValidatorEraPoints } from 'plugin-staking-api/types'
 import type { FormEvent, ReactNode } from 'react'
 import type { DisplayFor } from 'types'
 
@@ -27,12 +26,6 @@ export interface SearchInputProps {
   placeholder: string
 }
 
-export interface EraPointsHistoricalProps {
-  address: string
-  displayFor: DisplayFor
-  eraPoints: ValidatorEraPoints[]
-}
-
 export interface EraPointsGraphInnerProps {
   points: number[]
   syncing: boolean
@@ -47,4 +40,9 @@ export interface CurrentEraPointsProps {
 export interface IdentityDisplay {
   node: ReactNode
   data: Record<string, string> | null
+}
+
+export interface PulseProps {
+  address: string
+  displayFor: DisplayFor
 }

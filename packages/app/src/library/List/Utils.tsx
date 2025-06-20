@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import BigNumber from 'bignumber.js'
+import { MaxEraRewardPointsEras } from 'consts'
 import type { IdentityOf, SuperIdentity } from 'types'
 import type { IdentityDisplay } from './types'
 
@@ -66,7 +67,7 @@ export const normaliseEraPoints = (
 
 // Prefill low values where no points are recorded.
 export const prefillEraPoints = (eraPoints: number[]): number[] => {
-  const missing = Math.max(30 - eraPoints.length, 0)
+  const missing = Math.max(MaxEraRewardPointsEras - eraPoints.length, 0)
 
   if (!missing) {
     return eraPoints

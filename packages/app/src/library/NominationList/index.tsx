@@ -3,8 +3,6 @@
 
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
-import { useNetwork } from 'contexts/Network'
-import { usePlugins } from 'contexts/Plugins'
 import { useBondedPools } from 'contexts/Pools/BondedPools'
 import type { ValidatorListEntry } from 'contexts/Validators/types'
 import { useValidators } from 'contexts/Validators/ValidatorEntries'
@@ -13,8 +11,6 @@ import { useNominationStatus } from 'hooks/useNominationStatus'
 import { useSyncing } from 'hooks/useSyncing'
 import { List, Wrapper as ListWrapper } from 'library/List'
 import { MotionContainer } from 'library/List/MotionContainer'
-import { fetchValidatorEraPointsBatch } from 'plugin-staking-api'
-import type { ValidatorEraPointsBatch } from 'plugin-staking-api/types'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { NominationStatus } from 'types'
@@ -33,8 +29,6 @@ export const NominationList = ({
 }: NominationListProps) => {
   const { t } = useTranslation('app')
   const { syncing } = useSyncing()
-  const { network } = useNetwork()
-  const { pluginEnabled } = usePlugins()
   const { isReady, activeEra } = useApi()
   const { activeAddress } = useActiveAccounts()
   const { setModalResize } = useOverlay().modal
@@ -95,16 +89,6 @@ export const NominationList = ({
   // Store whether the list has been fetched initially
   const [fetched, setFetched] = useState<boolean>(false)
 
-  // Store performance data, keyed by address
-  const [performances, setPerformances] = useState<ValidatorEraPointsBatch[]>(
-    []
-  )
-
-  // A unique key for the current page of items
-  const pageKey = JSON.stringify(
-    validators.map(({ address }, i) => `${i}${address}`)
-  )
-
   // If in modal, handle resize
   const maybeHandleModalResize = () => {
     if (displayFor === 'modal') {
@@ -118,32 +102,10 @@ export const NominationList = ({
     setFetched(true)
   }
 
-  // Fetch performance data
-  const getPerformanceData = async (key: string) => {
-    if (!pluginEnabled('staking_api')) {
-      return
-    }
-    const results = await fetchValidatorEraPointsBatch(
-      network,
-      validators.map(({ address }) => address),
-      Math.max(activeEra.index - 1, 0),
-      30
-    )
-    // Update performance if key still matches current page key
-    if (key === pageKey) {
-      setPerformances(results.validatorEraPointsBatch)
-    }
-  }
-
   // Reset list when list changes
   useEffect(() => {
     setFetched(false)
   }, [initialValidators, nominator])
-
-  // Fetch performance queries when list changes
-  useEffect(() => {
-    getPerformanceData(pageKey)
-  }, [pageKey, pluginEnabled('staking_api')])
 
   // Configure list when network is ready to fetch
   useEffect(() => {
@@ -184,11 +146,6 @@ export const NominationList = ({
                     toggleFavorites={toggleFavorites}
                     bondFor={bondFor}
                     displayFor={displayFor}
-                    eraPoints={
-                      performances.find(
-                        (entry) => entry.validator === validator.address
-                      )?.points || []
-                    }
                     nominationStatus={
                       nominationStatus.current[validator.address]
                     }

@@ -1,8 +1,77 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
+import BigNumber from 'bignumber.js'
+import { MaxEraRewardPointsEras } from 'consts'
+import { useApi } from 'contexts/Api'
+import { usePlugins } from 'contexts/Plugins'
+import { useTooltip } from 'contexts/Tooltip'
+import { useValidators } from 'contexts/Validators/ValidatorEntries'
+import { Subscan } from 'controllers/Subscan'
+import type { SubscanEraPoints } from 'controllers/Subscan/types'
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Fragment } from 'react/jsx-runtime'
-import type { EraPointsGraphInnerProps } from '../types'
+import { TooltipArea } from 'ui-core/base'
+import { Graph } from 'ui-core/list'
+import type { EraPointsGraphInnerProps, PulseProps } from '../types'
+import { normaliseEraPoints, prefillEraPoints } from '../Utils'
+
+export const Pulse = ({ address, displayFor }: PulseProps) => {
+  const [eraPoints, setEraPoints] = useState<SubscanEraPoints[]>([])
+  const { t } = useTranslation('app')
+  const { plugins } = usePlugins()
+  const isSubscanEnabled = plugins.includes('subscan')
+  const { isReady, activeEra } = useApi()
+  const startEra = activeEra.index - 1
+
+  const fetchEraPoints = useCallback(async () => {
+    const result = await Subscan.handleFetchEraPoints(address, startEra)
+    setEraPoints(result)
+  }, [address, startEra])
+
+  useEffect(() => {
+    if (isSubscanEnabled) {
+      fetchEraPoints()
+    }
+  }, [fetchEraPoints, isSubscanEnabled])
+
+  const sortedEraPoints = eraPoints.slice().sort((a, b) => a.era - b.era)
+  const { setTooltipTextAndOpen } = useTooltip()
+  const { eraPointsBoundaries, erasRewardPoints } = useValidators()
+  const high = eraPointsBoundaries?.high || new BigNumber(1)
+  const lastMaxEraRewardPointsEras = sortedEraPoints.slice(
+    -MaxEraRewardPointsEras
+  )
+  const eraPointsMap = lastMaxEraRewardPointsEras.reduce(
+    (acc, item) => {
+      acc[item.era.toString()] = new BigNumber(item.reward_point)
+      return acc
+    },
+    {} as Record<string, BigNumber>
+  )
+  const normalisedPoints = normaliseEraPoints(eraPointsMap, high)
+  const prefilledPoints = prefillEraPoints(Object.values(normalisedPoints))
+
+  const syncing = !isReady || !Object.values(erasRewardPoints).length
+  const tooltipText = t('validatorPerformance', {
+    count: MaxEraRewardPointsEras,
+  })
+
+  return (
+    <Graph syncing={syncing} canvas={displayFor === 'canvas'}>
+      <TooltipArea
+        text={tooltipText}
+        onMouseMove={() => setTooltipTextAndOpen(tooltipText)}
+      />
+      <Inner
+        points={prefilledPoints}
+        syncing={syncing}
+        displayFor={displayFor}
+      />
+    </Graph>
+  )
+}
 
 export const Inner = ({
   points: rawPoints = [],

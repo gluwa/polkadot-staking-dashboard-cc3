@@ -3,10 +3,8 @@
 
 import classNames from 'classnames'
 import { useList } from 'contexts/List'
-import { usePlugins } from 'contexts/Plugins'
 import { useValidators } from 'contexts/Validators/ValidatorEntries'
-import { CurrentEraPoints } from 'library/List/EraPointsGraph/CurrentEraPoints'
-import { HistoricalEraPoints } from 'library/List/EraPointsGraph/HistoricalEraPoints'
+import { Pulse } from 'library/List/EraPointsGraph/Inner'
 import { getIdentityDisplay } from 'library/List/Utils'
 import { CopyAddress } from 'library/ListItem/Buttons/CopyAddress'
 import { Metrics } from 'library/ListItem/Buttons/Metrics'
@@ -26,10 +24,8 @@ export const Item = ({
   validator,
   toggleFavorites,
   displayFor,
-  eraPoints,
   onRemove,
 }: ItemProps) => {
-  const { pluginEnabled } = usePlugins()
   const { selectable, selected } = useList()
   const { validatorIdentities, validatorSupers } = useValidators()
   const { address, prefs, validatorStatus } = validator
@@ -78,15 +74,7 @@ export const Item = ({
         <Separator />
         <div className="row bottom lg">
           <div>
-            {pluginEnabled('staking_api') ? (
-              <HistoricalEraPoints
-                address={address}
-                displayFor={displayFor}
-                eraPoints={eraPoints}
-              />
-            ) : (
-              <CurrentEraPoints address={address} displayFor={displayFor} />
-            )}
+            <Pulse address={address} displayFor={displayFor} />
           </div>
           <div>
             <LabelRow inline>

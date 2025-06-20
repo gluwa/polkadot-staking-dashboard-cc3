@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { ValidatorListEntry } from 'contexts/Validators/types'
-import type { ValidatorEraPoints } from 'plugin-staking-api/types'
 import type { ReactNode } from 'react'
 import type {
   AnyFunction,
@@ -46,7 +45,6 @@ export interface ItemProps {
   format?: string
   toggleFavorites?: boolean
   nominationStatus?: NominationStatus
-  eraPoints: ValidatorEraPoints[]
   onRemove?: (params: {
     selected: Validator[]
     resetSelection?: () => void

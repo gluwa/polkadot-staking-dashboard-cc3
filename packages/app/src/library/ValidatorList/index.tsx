@@ -7,8 +7,6 @@ import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
 import { useFilters } from 'contexts/Filters'
 import { ListProvider, useList } from 'contexts/List'
-import { useNetwork } from 'contexts/Network'
-import { usePlugins } from 'contexts/Plugins'
 import { useThemeValues } from 'contexts/ThemeValues'
 import type { ValidatorListEntry } from 'contexts/Validators/types'
 import { useValidators } from 'contexts/Validators/ValidatorEntries'
@@ -18,8 +16,6 @@ import { FilterHeaderWrapper, List, Wrapper as ListWrapper } from 'library/List'
 import { MotionContainer } from 'library/List/MotionContainer'
 import { Pagination } from 'library/List/Pagination'
 import { SearchInput } from 'library/List/SearchInput'
-import { fetchValidatorEraPointsBatch } from 'plugin-staking-api'
-import type { ValidatorEraPointsBatch } from 'plugin-staking-api/types'
 import type { FormEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -65,8 +61,6 @@ export const ValidatorListInner = ({
   } = useFilters()
   const listProvider = useList()
   const { syncing } = useSyncing()
-  const { network } = useNetwork()
-  const { pluginEnabled } = usePlugins()
   const { getThemeValue } = useThemeValues()
   const { activeAddress } = useActiveAccounts()
   const { setModalResize } = useOverlay().modal
@@ -123,11 +117,6 @@ export const ValidatorListInner = ({
   // Store whether the search bar is being used
   const [isSearching, setIsSearching] = useState<boolean>(false)
 
-  // Store performance data, keyed by address
-  const [performances, setPerformances] = useState<ValidatorEraPointsBatch[]>(
-    []
-  )
-
   // Pagination
   const pageLength: number = itemsPerPage || validators.length
   const totalPages = Math.ceil(validators.length / pageLength)
@@ -153,13 +142,6 @@ export const ValidatorListInner = ({
 
   // Get subset for page display.
   const listItems = validators.slice(pageStart).slice(0, pageLength)
-  // A unique key for the current page of items
-  const pageKey =
-    JSON.stringify(listItems.map(({ address }, i) => `${i}${address}`)) +
-    JSON.stringify(includes) +
-    JSON.stringify(excludes) +
-    JSON.stringify(order) +
-    JSON.stringify(searchTerm)
 
   // if in modal, handle resize
   const maybeHandleModalResize = () => {
@@ -193,23 +175,6 @@ export const ValidatorListInner = ({
     setValidatorsDefault(prepareInitialValidators())
     setValidators(prepareInitialValidators())
     setFetched(true)
-  }
-
-  // Fetch performance data
-  const getPerformanceData = async (key: string) => {
-    if (!pluginEnabled('staking_api')) {
-      return
-    }
-    const results = await fetchValidatorEraPointsBatch(
-      network,
-      listItems.map(({ address }) => address),
-      Math.max(activeEra.index - 1, 0),
-      30
-    )
-    // Update performance if key still matches current page key
-    if (key === pageKey) {
-      setPerformances(results.validatorEraPointsBatch)
-    }
   }
 
   // Set default filters. Should re-render if era stakers re-syncs as era points effect the
@@ -253,11 +218,6 @@ export const ValidatorListInner = ({
   useEffect(() => {
     setFetched(false)
   }, [initialValidators, nominator])
-
-  // Fetch performance queries when validator list changes
-  useEffect(() => {
-    getPerformanceData(pageKey)
-  }, [pageKey, pluginEnabled('staking_api')])
 
   // Configure validator list when network is ready to fetch
   useEffect(() => {
@@ -361,11 +321,6 @@ export const ValidatorListInner = ({
                     toggleFavorites={toggleFavorites}
                     bondFor={bondFor}
                     displayFor={displayFor}
-                    eraPoints={
-                      performances.find(
-                        (entry) => entry.validator === validator.address
-                      )?.points || []
-                    }
                     nominationStatus={
                       nominationStatus.current[validator.address]
                     }

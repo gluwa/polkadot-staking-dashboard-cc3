@@ -317,6 +317,29 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     setSessionValidators(result)
   }
 
+  // Gets era points for a validator
+  const getValidatorPointsFromEras = (startEra: BigNumber, address: string) => {
+    startEra = BigNumber.max(startEra, 1)
+
+    // minus 1 from `MaxRewardPointsEras` to account for the current era.
+    const endEra = BigNumber.max(startEra.minus(MaxEraRewardPointsEras - 1), 1)
+
+    const points: Record<string, BigNumber> = {}
+    let currentEra = startEra
+    do {
+      const eraPoints = erasRewardPoints[currentEra.toString()]
+      if (eraPoints) {
+        const validatorPoints = eraPoints.individual[address]
+        points[currentEra.toString()] = new BigNumber(validatorPoints || 0)
+      } else {
+        points[currentEra.toString()] = new BigNumber(0)
+      }
+      currentEra = currentEra.minus(1)
+    } while (currentEra.isGreaterThanOrEqualTo(endEra))
+
+    return points
+  }
+
   // Fetches prefs for a list of validators
   const fetchValidatorPrefs = async (addresses: ValidatorAddresses) => {
     if (!addresses.length) {
@@ -533,6 +556,7 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     <ValidatorsContext.Provider
       value={{
         fetchValidatorPrefs,
+        getValidatorPointsFromEras,
         injectValidatorListData,
         getValidators,
         validatorIdentities,

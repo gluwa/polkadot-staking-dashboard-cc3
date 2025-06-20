@@ -1,11 +1,8 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { useNetwork } from 'contexts/Network'
-import { usePlugins } from 'contexts/Plugins'
 import { useBondedPools } from 'contexts/Pools/BondedPools'
 import { usePoolPerformance } from 'contexts/Pools/PoolPerformance'
-import { fetchPoolCandidates } from 'plugin-staking-api'
 import { useEffect, useMemo, useState } from 'react'
 import type { BondedPool } from 'types'
 import { Main } from 'ui-core/canvas'
@@ -19,8 +16,6 @@ export const Pool = () => {
   const {
     config: { options },
   } = useOverlay().canvas
-  const { network } = useNetwork()
-  const { pluginEnabled } = usePlugins()
   const { poolsMetaData, bondedPools } = useBondedPools()
   const { getPoolPerformanceTask } = usePoolPerformance()
 
@@ -46,17 +41,11 @@ export const Pool = () => {
 
   // Gets pool candidates for joining pool. If Staking API is disabled, fall back to subset of open
   // pools
-  const getPoolCandidates = async () => {
-    if (pluginEnabled('staking_api')) {
-      const result = await fetchPoolCandidates(network)
-      return result?.poolCandidates || []
-    } else {
-      return bondedPools
-        .filter(({ state }) => state === 'Open')
-        .map(({ id }) => Number(id))
-        .sort(() => Math.random() - 0.5)
-    }
-  }
+  const getPoolCandidates = async () =>
+    bondedPools
+      .filter(({ state }) => state === 'Open')
+      .map(({ id }) => Number(id))
+      .sort(() => Math.random() - 0.5)
 
   const shuffledCandidates: BondedPool[] = useMemo(
     () =>

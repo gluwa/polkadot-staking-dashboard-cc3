@@ -184,7 +184,7 @@ export class Subscan {
       row: 100,
       address,
     })
-    if (!result) {
+    if (!result || !result.list) {
       return []
     }
 

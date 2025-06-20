@@ -157,14 +157,28 @@ export const LegacyEraPoints = ({
       style={{
         width,
         height,
+        position: 'relative',
       }}
     >
-      {syncing && (
-        <Spinner
-          style={{ position: 'absolute', right: '3rem', top: '-4rem' }}
-        />
-      )}
       <Line options={options} data={data} />
+      {syncing && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+          }}
+        >
+          <Spinner />
+        </div>
+      )}
     </div>
   )
 }

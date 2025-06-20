@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { ValidatorListEntry } from 'contexts/Validators/types'
-import type { ValidatorEraPoints } from 'plugin-staking-api/types'
 import type {
   BondFor,
   DisplayFor,
@@ -29,5 +28,4 @@ export interface ItemProps {
   displayFor: DisplayFor
   toggleFavorites?: boolean
   nominationStatus?: NominationStatus
-  eraPoints: ValidatorEraPoints[]
 }

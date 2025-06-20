@@ -7,6 +7,10 @@ import type { AnyJson, IdentityOf, Validator, ValidatorStatus } from 'types'
 
 export interface ValidatorsContextInterface {
   fetchValidatorPrefs: (a: ValidatorAddresses) => Promise<Validator[] | null>
+  getValidatorPointsFromEras: (
+    startEra: BigNumber,
+    address: string
+  ) => Record<string, BigNumber>
   injectValidatorListData: (entries: Validator[]) => ValidatorListEntry[]
   getValidators: () => Validator[]
   validatorIdentities: Record<string, IdentityOf>

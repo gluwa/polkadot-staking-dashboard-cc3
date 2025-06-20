@@ -1,14 +1,12 @@
 // Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import { usePlugins } from 'contexts/Plugins'
 import { useValidators } from 'contexts/Validators/ValidatorEntries'
-import { CurrentEraPoints } from 'library/List/EraPointsGraph/CurrentEraPoints'
+import { Pulse } from 'library/List/EraPointsGraph/Inner'
 import { getIdentityDisplay } from 'library/List/Utils'
 import { Quartile } from 'library/ListItem/Labels/Quartile'
 import { Wrapper } from 'library/ListItem/Wrappers'
 import { HeaderButtonRow, LabelRow, Separator } from 'ui-core/list'
-import { HistoricalEraPoints } from '../List/EraPointsGraph/HistoricalEraPoints'
 import { CopyAddress } from '../ListItem/Buttons/CopyAddress'
 import { FavoriteValidator } from '../ListItem/Buttons/FavoriteValidator'
 import { Metrics } from '../ListItem/Buttons/Metrics'
@@ -25,9 +23,7 @@ export const Item = ({
   bondFor,
   displayFor,
   nominationStatus,
-  eraPoints,
 }: ItemProps) => {
-  const { pluginEnabled } = usePlugins()
   const { validatorIdentities, validatorSupers } = useValidators()
   const { address, prefs } = validator
   const commission = prefs?.commission ?? null
@@ -64,15 +60,7 @@ export const Item = ({
         <Separator />
         <div className="row bottom lg">
           <div>
-            {pluginEnabled('staking_api') ? (
-              <HistoricalEraPoints
-                address={address}
-                displayFor={displayFor}
-                eraPoints={eraPoints}
-              />
-            ) : (
-              <CurrentEraPoints address={address} displayFor={displayFor} />
-            )}
+            <Pulse address={address} displayFor={displayFor} />
           </div>
           <div>
             <LabelRow inline>

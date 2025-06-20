@@ -47,7 +47,7 @@ export const PayoutBar = ({
   height,
   data: { payouts, poolClaims, unclaimedPayouts },
 }: PayoutBarProps) => {
-  const { i18n, t } = useTranslation('pages')
+  const { i18n, t } = useTranslation('app')
   const { mode } = useTheme()
   const { inSetup } = useStaking()
   const { getStakingLedger } = useBalances()
