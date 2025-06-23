@@ -9,6 +9,7 @@ import { MaxEraRewardPointsEras } from 'consts'
 import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
 import { useStaking } from 'contexts/Staking'
+import type { PalletStakingEraRewardPoints } from 'dedot/chaintypes'
 import {
   getValidatorRank as getValidatorRankBus,
   getValidatorRanks,
@@ -17,7 +18,6 @@ import { useErasPerDay } from 'hooks/useErasPerDay'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import type {
-  AnyJson,
   IdentityOf,
   SuperIdentity,
   Validator,
@@ -26,6 +26,7 @@ import type {
 import { perbillToPercent } from 'utils'
 import type {
   EraPointsBoundaries,
+  EraRewardPoints,
   ErasRewardPoints,
   ValidatorAddresses,
   ValidatorEraPointHistory,
@@ -102,19 +103,30 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   }>(defaultAverageEraValidatorReward)
 
   // Processes reward points for a given era
-  const processEraRewardPoints = (result: AnyJson, era: BigNumber) => {
-    if (erasRewardPoints[era.toString()]) {
-      return erasRewardPoints[era.toString()]
+  const processEraRewardPoints = (
+    result: PalletStakingEraRewardPoints | undefined,
+    era: BigNumber
+  ): EraRewardPoints => {
+    const eraKey = era.toString()
+
+    if (!result) {
+      return erasRewardPoints[eraKey]
     }
+
+    if (erasRewardPoints[eraKey]) {
+      return erasRewardPoints[eraKey]
+    }
+
+    const individual: Record<string, string> = Object.fromEntries(
+      result.individual.map(([accountId, points]) => [
+        accountId.address(),
+        points.toString(),
+      ])
+    )
 
     return {
       total: result.total.toString(),
-      individual: Object.fromEntries(
-        result.individual.map(([key, value]: [number, string]) => [
-          key,
-          (value as string).toString(),
-        ])
-      ),
+      individual,
     }
   }
 
