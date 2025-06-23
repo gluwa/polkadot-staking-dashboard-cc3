@@ -10,10 +10,10 @@ import { useOnResize, useOutsideAlerter } from '@w3ux/hooks'
 import { capitalizeFirstLetter } from '@w3ux/utils'
 import { getChainIcons } from 'assets'
 import DiscordSVG from 'assets/brands/discord.svg?react'
+import CreditcoinLogoMini from 'assets/chains/creditcoinLogoMini.svg?react'
+import CreditcoinLogo from 'assets/chains/creditcoinLogoNormal.svg?react'
 import BookSVG from 'assets/icons/book.svg?react'
-import CloudSVG from 'assets/icons/cloud.svg?react'
 import EnvelopeSVG from 'assets/icons/envelope.svg?react'
-import LogoSVG from 'assets/icons/logo.svg?react'
 import { PageWidthMediumThreshold } from 'consts'
 import { useApi } from 'contexts/Api'
 import { useHelp } from 'contexts/Help'
@@ -75,20 +75,13 @@ export const SideMenu = () => {
             onClick={() => setUserSideMenuMinimised(!userSideMenuMinimised)}
           >
             {sideMenuMinimised ? (
-              <CloudSVG style={{ maxHeight: '100%', width: '2rem' }} />
+              <CreditcoinLogoMini
+                style={{ maxHeight: '100%', width: '2rem' }}
+              />
             ) : (
-              <>
-                <CloudSVG
-                  style={{
-                    maxHeight: '100%',
-                    height: '100%',
-                    width: '1.55rem',
-                  }}
-                />
-                <span>
-                  <LogoSVG className="logo" />
-                </span>
-              </>
+              <span>
+                <CreditcoinLogo className="logo" />
+              </span>
             )}
             {!sideMenuOpen && (
               <span className="toggle">

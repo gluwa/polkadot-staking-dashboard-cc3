@@ -9,7 +9,6 @@ import { getNetworkData } from 'consts/util'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useBalances } from 'contexts/Balances'
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts'
-import { useCurrency } from 'contexts/Currency'
 import { useNetwork } from 'contexts/Network'
 import { useTransferOptions } from 'contexts/TransferOptions'
 import { useSyncing } from 'hooks/useSyncing'
@@ -26,7 +25,6 @@ import { planckToUnitBn } from 'utils'
 export const BalanceChart = () => {
   const { t } = useTranslation('pages')
   const { network } = useNetwork()
-  const { currency } = useCurrency()
   const { openModal } = useOverlay().modal
   const { getStakingLedger } = useBalances()
   const { getAccountBalance } = useBalances()
@@ -129,10 +127,9 @@ export const BalanceChart = () => {
     <>
       <CardHeader>
         <h4>{t('balance')}</h4>
-        <Balance.WithFiat
+        <Balance.Value
           Token={<Token />}
-          value={totalBalance.toNumber()}
-          currency={currency}
+          tokenBalance={totalBalance.toNumber()}
         />
       </CardHeader>
       <BarChartWrapper>

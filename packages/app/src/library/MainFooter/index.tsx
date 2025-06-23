@@ -8,19 +8,15 @@ import { capitalizeFirstLetter } from '@w3ux/utils'
 import CloudIconSVG from 'assets/icons/cloud.svg?react'
 import BigNumber from 'bignumber.js'
 import { useNetwork } from 'contexts/Network'
-import { usePlugins } from 'contexts/Plugins'
-import { IGNORE_NETWORKS } from 'contexts/TokenPrice'
 import { blockNumber$ } from 'global-bus'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Page } from 'ui-core/base'
 import { Status } from './Status'
-import { TokenPrice } from './TokenPrice'
 import { Summary, Wrapper } from './Wrappers'
 
 export const MainFooter = () => {
   const { t } = useTranslation('app')
-  const { plugins } = usePlugins()
   const { network } = useNetwork()
   const PRIVACY_URL = import.meta.env.VITE_PRIVACY_URL
   const DISCLAIMER_URL = import.meta.env.VITE_DISCLAIMER_URL
@@ -78,8 +74,6 @@ export const MainFooter = () => {
           </section>
           <section>
             <div className="hide-small">
-              {plugins.includes('staking_api') &&
-                !IGNORE_NETWORKS.includes(network) && <TokenPrice />}
               {import.meta.env.MODE === 'development' && (
                 <div className="stat last">
                   <FontAwesomeIcon icon={faHive} />

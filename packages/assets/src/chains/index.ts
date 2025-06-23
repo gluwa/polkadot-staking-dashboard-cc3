@@ -2,16 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { ChainIcons, NetworkId } from 'types'
-import WestendTokenSVG from '../token/wnd.svg?react'
-import WestendIconSVG from './westendIcon.svg?react'
-import WestendInlineSVG from './westendInline.svg?react'
+import CreditcoinTokenSVG from '../token/ic_creditcoin.svg?react'
 
 export const chainIcons: Record<NetworkId, ChainIcons> = {
   'creditcoin3-dev': {
-    icon: WestendIconSVG,
-    token: WestendTokenSVG,
+    icon: CreditcoinTokenSVG,
+    token: CreditcoinTokenSVG,
     inline: {
-      svg: WestendInlineSVG,
+      svg: CreditcoinTokenSVG,
       size: '0.96em',
     },
   },
