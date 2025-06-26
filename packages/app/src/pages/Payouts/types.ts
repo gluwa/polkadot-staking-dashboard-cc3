@@ -9,4 +9,5 @@ export interface PayoutListProps {
   title?: string | null
   payoutsList?: AnyApi
   payouts?: AnyApi
+  disableThrottle?: boolean
 }

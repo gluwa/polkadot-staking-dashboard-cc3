@@ -1,14 +1,13 @@
-// Copyright 2025 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
+// Copyright 2023 @paritytech/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { faBars, faGripVertical } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { ellipsisFn } from '@w3ux/utils'
-import BigNumber from 'bignumber.js'
+import { ellipsisFn, planckToUnit } from '@w3ux/utils'
 import type { AnyApi } from 'common-types'
+import { ListItemsPerBatch, ListItemsPerPage } from 'consts'
 import { getNetworkData } from 'consts/util'
 import { useApi } from 'contexts/Api'
-import { useList } from 'contexts/List'
 import { useNetwork } from 'contexts/Network'
 import { useBondedPools } from 'contexts/Pools/BondedPools'
 import { StakingContext } from 'contexts/Staking'
@@ -19,65 +18,95 @@ import { motion } from 'framer-motion'
 import { Header, List, Wrapper as ListWrapper } from 'library/List'
 import { MotionContainer } from 'library/List/MotionContainer'
 import { Pagination } from 'library/List/Pagination'
-import { payoutsPerPage } from 'library/List/defaults'
 import { Identity } from 'library/ListItem/Labels/Identity'
 import { PoolIdentity } from 'library/ListItem/Labels/PoolIdentity'
 import { DefaultLocale, locales } from 'locales'
-import { Component, useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { planckToUnitBn } from 'utils'
 import { ItemWrapper } from '../Wrappers'
 import type { PayoutListProps } from '../types'
-import { PayoutListProvider } from './context'
+import { PayoutListProvider, usePayoutList } from './context'
 
 export const PayoutListInner = ({
   allowMoreCols,
   pagination,
   title,
   payouts: initialPayouts,
+  disableThrottle = false,
 }: PayoutListProps) => {
-  const { i18n, t } = useTranslation('pages')
-  const { isReady, activeEra } = useApi()
+  const { i18n, t } = useTranslation('app')
   const { network } = useNetwork()
+  const { unit, units } = getNetworkData(network)
+  const { isReady, activeEra } = useApi()
+  const { listFormat, setListFormat } = usePayoutList()
+  const { getValidators } = useValidators()
   const { bondedPools } = useBondedPools()
   const { getThemeValue } = useThemeValues()
-  const { listFormat, setListFormat } = useList()
-  const { getValidators } = useValidators()
 
+  // current page
   const [page, setPage] = useState<number>(1)
-  const { unit, units } = getNetworkData(network)
 
-  // Manipulated list (ordering, filtering) of payouts
-  const [payouts, setPayouts] = useState<AnyApi>(initialPayouts)
+  // current render iteration
+  const [renderIteration, _setRenderIteration] = useState<number>(1)
 
-  // Whether still in initial fetch
+  // manipulated list (ordering, filtering) of payouts
+  const [payouts, setPayouts] = useState(initialPayouts)
+
+  // is this the initial fetch
   const [fetched, setFetched] = useState<boolean>(false)
 
-  const totalPages = Math.ceil(payouts.length / payoutsPerPage)
-  const pageEnd = page * payoutsPerPage - 1
-  const pageStart = pageEnd - (payoutsPerPage - 1)
+  // render throttle iteration
+  const renderIterationRef = useRef(renderIteration)
+  const setRenderIteration = (iter: number) => {
+    renderIterationRef.current = iter
+    _setRenderIteration(iter)
+  }
 
-  // Refetch list when list changes
+  // pagination
+  const totalPages = Math.ceil(payouts.length / ListItemsPerPage)
+  const pageEnd = page * ListItemsPerPage - 1
+  const pageStart = pageEnd - (ListItemsPerPage - 1)
+
+  // render batch
+  const batchEnd = Math.min(
+    renderIteration * ListItemsPerBatch - 1,
+    ListItemsPerPage
+  )
+
+  // refetch list when list changes
   useEffect(() => {
     setFetched(false)
   }, [initialPayouts])
 
-  // Configure list when network is ready to fetch
+  // configure list when network is ready to fetch
   useEffect(() => {
-    if (isReady && activeEra.index > 0 && !fetched) {
+    if (isReady && activeEra && !fetched) {
       setPayouts(initialPayouts)
       setFetched(true)
     }
   }, [isReady, fetched, activeEra.index])
 
+  // render throttle
+  useEffect(() => {
+    if (!(batchEnd >= pageEnd || disableThrottle)) {
+      setTimeout(() => {
+        setRenderIteration(renderIterationRef.current + 1)
+      }, 500)
+    }
+  }, [renderIterationRef.current])
+
   // get list items to render
   let listPayouts = []
 
   // get throttled subset or entire list
-  listPayouts = payouts.slice(pageStart).slice(0, payoutsPerPage)
+  if (!disableThrottle) {
+    listPayouts = payouts.slice(pageStart).slice(0, ListItemsPerPage)
+  } else {
+    listPayouts = payouts
+  }
 
   if (!payouts.length) {
-    return null
+    return <div />
   }
 
   return (
@@ -117,9 +146,9 @@ export const PayoutListInner = ({
           {listPayouts.map((p: AnyApi, index: number) => {
             const label =
               p.event_id === 'PaidOut'
-                ? t('payouts.poolClaim')
+                ? t('poolClaim')
                 : p.event_id === 'Rewarded'
-                  ? t('payouts.payout')
+                  ? t('payout')
                   : p.event_id
 
             const labelClass =
@@ -131,7 +160,7 @@ export const PayoutListInner = ({
 
             // get validator if it exists
             const validator = getValidators().find(
-              (v: { address: AnyApi }) => v.address === p.validator_stash
+              (v) => v.address === p.validator_stash
             )
 
             // get pool if it exists
@@ -142,6 +171,7 @@ export const PayoutListInner = ({
               : pool
                 ? bondedPools.indexOf(pool)
                 : 0
+
             return (
               <motion.div
                 className={`item ${listFormat === 'row' ? 'row' : 'col'}`}
@@ -165,11 +195,7 @@ export const PayoutListInner = ({
                           <h4 className={labelClass}>
                             <>
                               {p.event_id === 'Slashed' ? '-' : '+'}
-                              {planckToUnitBn(
-                                new BigNumber(p.amount),
-                                units
-                              ).toString()}{' '}
-                              {unit}
+                              {planckToUnit(p.amount, units)} {unit}
                             </>
                           </h4>
                         </div>
@@ -181,22 +207,31 @@ export const PayoutListInner = ({
                     <div className="row">
                       <div>
                         <div>
-                          {label === t('payouts.payout') &&
-                            (batchIndex > 0 ? (
-                              <Identity address={p.validator_stash} />
-                            ) : (
-                              <div>{ellipsisFn(p.validator_stash)}</div>
-                            ))}
-                          {label === t('payouts.poolClaim') &&
-                            (pool ? (
-                              <PoolIdentity pool={pool} />
-                            ) : (
-                              <h4>
-                                {t('payouts.fromPool')} {p.pool_id}
-                              </h4>
-                            ))}
-                          {label === t('payouts.slashed') && (
-                            <h4>{t('payouts.deductedFromBond')}</h4>
+                          {label === t('payout') && (
+                            <div>
+                              {batchIndex > 0 ? (
+                                <Identity address={p.validator_stash} />
+                              ) : (
+                                <div>
+                                  {ellipsisFn(p.validator_stash)}
+                                  {p.validator_stash}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {label === t('poolClaim') && (
+                            <div>
+                              {pool ? (
+                                <PoolIdentity pool={pool} />
+                              ) : (
+                                <h4>
+                                  {t('fromPool')} {p.pool_id}
+                                </h4>
+                              )}
+                            </div>
+                          )}
+                          {label === t('slashed') && (
+                            <h4>{t('deductedFromBond')}</h4>
                           )}
                         </div>
                         <div>
@@ -226,13 +261,16 @@ export const PayoutListInner = ({
     </ListWrapper>
   )
 }
+
 export const PayoutList = (props: PayoutListProps) => (
   <PayoutListProvider>
     <PayoutListShouldUpdate {...props} />
   </PayoutListProvider>
 )
-export class PayoutListShouldUpdate extends Component {
+
+export class PayoutListShouldUpdate extends React.Component {
   static contextType = StakingContext
+
   render() {
     return <PayoutListInner {...this.props} />
   }

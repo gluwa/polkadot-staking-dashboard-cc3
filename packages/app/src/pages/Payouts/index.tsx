@@ -143,7 +143,7 @@ export const Payouts = ({ page: { key } }: PageProps) => {
         <Page.Row>
           <CardWrapper>
             <PayoutList
-              title={t('payouts.recentPayouts', { ns: 'pages' })}
+              title={t('recentPayouts', { ns: 'pages' })}
               payouts={payoutsList}
               pagination
             />
