@@ -92,9 +92,10 @@ export const Payouts = () => {
                 : planckToUnitBn(
                     new BigNumber(lastReward.amount),
                     units
-                  ).toFormat(),
+                  ).toFormat(2),
               2
             )}
+            zeroDecimals={2}
           />
           <span className="note">
             {lastReward === null ? (

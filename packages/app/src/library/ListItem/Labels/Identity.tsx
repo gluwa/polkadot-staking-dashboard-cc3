@@ -42,7 +42,7 @@ export const Identity = ({ address }: IdentityProps) => {
       </div>
       <div>
         {validatorsFetched && display !== null ? (
-          <h4>{display}</h4>
+          <h5>{display}</h5>
         ) : (
           <h5>{ellipsisFn(address, 6)}</h5>
         )}

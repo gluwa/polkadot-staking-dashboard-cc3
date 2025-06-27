@@ -95,7 +95,7 @@ export const Bond = () => {
       ? 0n
       : bondToSubmit.isNaN()
         ? 0n
-        : BigInt(bondToSubmit.toString())
+        : BigInt(bondToSubmit.toFixed(0))
 
     if (isPooling) {
       tx = serviceApi.tx.poolBondExtra('FreeBalance', bondBigInt)

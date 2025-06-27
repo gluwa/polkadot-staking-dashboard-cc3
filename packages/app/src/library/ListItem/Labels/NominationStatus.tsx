@@ -57,7 +57,7 @@ export const NominationStatus = ({
       <h5>
         {t(statusTKey)}
         {stakedAmount.isGreaterThan(0)
-          ? ` / ${syncing ? '...' : `${stakedAmount.toFormat()} ${unit}`}`
+          ? ` / ${syncing ? '...' : `${stakedAmount.toFormat(3)} ${unit}`}`
           : null}
       </h5>
     </ValidatorStatusWrapper>

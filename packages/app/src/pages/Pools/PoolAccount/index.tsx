@@ -27,7 +27,7 @@ export const PoolAccount = ({ address }: PoolAccountProps) => {
             <div className="icon">
               <Polkicon address={address} />
             </div>
-            <h4>{ellipsisFn(address)}</h4>
+            <h5>{ellipsisFn(address)}</h5>
           </>
         )}
         <div>

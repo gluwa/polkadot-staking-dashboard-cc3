@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { Odometer } from '@w3ux/react-odometer'
-import { minDecimalPlaces, rmCommas } from '@w3ux/utils'
+import { rmCommas } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
-import { getNetworkData } from 'consts/util'
-import { useNetwork } from 'contexts/Network'
 import type { ReactNode } from 'react'
 import { TokenFiat } from 'ui-core/base'
 
@@ -16,23 +14,15 @@ export const Value = ({
   Token: ReactNode
   tokenBalance: string | number
 }) => {
-  const { network } = useNetwork()
-  const { units } = getNetworkData(network)
-  // Convert balance to fiat value
-  const freeFiat = new BigNumber(rmCommas(String(tokenBalance))).decimalPlaces(
-    2
-  )
-
-  const valueFormatted =
-    String(freeFiat) === '0' ? 0 : new BigNumber(freeFiat).toFormat(units)
+  // Convert to BigNumber and format with exactly 2 decimals and thousands separators
+  const formattedValue = new BigNumber(rmCommas(String(tokenBalance)))
+    .decimalPlaces(2)
+    .toFormat(2)
 
   return (
     <TokenFiat Token={Token}>
       <h1>
-        <Odometer
-          value={minDecimalPlaces(valueFormatted, 2)}
-          zeroDecimals={2}
-        />
+        <Odometer value={formattedValue} />
       </h1>
     </TokenFiat>
   )

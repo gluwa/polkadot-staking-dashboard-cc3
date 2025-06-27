@@ -28,9 +28,9 @@ export const PoolIdentity = ({
       </div>
       <div>
         {!metadataSynced ? (
-          <h4>{ellipsisFn(addresses.stash)}</h4>
+          <h5>{ellipsisFn(addresses.stash)}</h5>
         ) : (
-          <h4>{display}</h4>
+          <h5>{display}</h5>
         )}
       </div>
     </Identity>

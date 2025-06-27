@@ -77,7 +77,7 @@ export const Payouts = ({ page: { key } }: PageProps) => {
 
   return (
     <>
-      <Page.Title title={t(key, { ns: 'base' })} />
+      <Page.Title title={t(key, { ns: 'app' })} />
       <Stat.Row>
         <LastEraPayout />
       </Stat.Row>
