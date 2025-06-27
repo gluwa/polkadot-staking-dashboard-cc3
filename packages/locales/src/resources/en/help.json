@@ -426,10 +426,10 @@
       "claimRewards": "Claiming Nomination Pool Rewards",
       "connectAccounts": "How to Connect Your Accounts",
       "createPools": "Creating Nomination Pools",
-      "howToUse": "How to Use the Polkadot Cloud Staking: Overview",
-      "polkawatchAnalytics": "Decentralization Analytics by Polkawatch: Introduction",
+      "creditcoinDocs": "Link to Creditcoin documentation",
+      "howToUse": "How to Use the Staking Dashboard: Overview",
       "rebonding": "Rebonding",
-      "stakeDot": "Staking your DOT",
+      "stakeDot": "Staking your CTC",
       "unbondingTokens": "Unbonding Your Tokens"
     },
     "modal": {

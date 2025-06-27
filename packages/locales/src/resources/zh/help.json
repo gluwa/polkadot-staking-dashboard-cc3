@@ -437,10 +437,9 @@
       "claimRewards": "申领提名池奖励",
       "connectAccounts": "如何连接您的帐户",
       "createPools": "创建提名池",
-      "howToUse": "Cloud Staking:概述",
-      "polkawatchAnalytics": "Polkawatch的去中心化分析: 介绍",
+      "howToUse": "如何使用Staking Dashboard:概述",
       "rebonding": "解除质押中",
-      "stakeDot": "抵押您的DOT",
+      "stakeDot": "抵押您的CTC",
       "unbondingTokens": "解除您的质押"
     },
     "modal": {
