@@ -109,7 +109,7 @@ export const UnbondFeedback = ({
     if (bondBn.isGreaterThan(unbondToMin)) {
       // start the error message stating a min bond is required.
       let err = `${t('minimumBond', {
-        minBondUnit: minBondUnit.toString(),
+        minBondUnit: new BigNumber(minBondUnit).decimalPlaces(2).toFormat(2),
         unit,
       })} `
       // append the subject to the error message.
