@@ -7,7 +7,6 @@ import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts'
 import { useNominatorSetups } from 'contexts/NominatorSetups'
-import { useActivePool } from 'contexts/Pools/ActivePool'
 import { useUi } from 'contexts/UI'
 import { CallToActionWrapper } from 'library/CallToAction'
 import { CallToActionLoader } from 'library/Loader/CallToAction'
@@ -21,7 +20,6 @@ export const NewNominator = ({ syncing }: NewNominatorProps) => {
   const { isReady } = useApi()
   const navigate = useNavigate()
   const { advancedMode } = useUi()
-  const { inPool } = useActivePool()
   const { openModal } = useOverlay().modal
   const { openCanvas } = useOverlay().canvas
   const { activeAddress } = useActiveAccounts()
