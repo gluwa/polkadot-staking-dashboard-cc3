@@ -6,6 +6,7 @@ import { Odometer } from '@w3ux/react-odometer'
 import { Polkicon } from '@w3ux/react-polkicon'
 import { applyWidthAsPadding, minDecimalPlaces } from '@w3ux/utils'
 import { getChainIcons } from 'assets'
+import BigNumber from 'bignumber.js'
 import { useHelp } from 'contexts/Help'
 import { useNetwork } from 'contexts/Network'
 import { useEffect, useLayoutEffect, useRef } from 'react'
@@ -64,7 +65,10 @@ export const Stat = ({
             }}
           />
           <Odometer
-            value={minDecimalPlaces(stat.value, 2)}
+            value={minDecimalPlaces(
+              stat === null ? '0' : new BigNumber(stat.value).toFormat(2),
+              2
+            )}
             spaceAfter="0.4rem"
             zeroDecimals={2}
           />

@@ -7,6 +7,7 @@ import type {
   PalletNominationPoolsPoolState,
   PalletStakingEraRewardPoints,
   PalletStakingRewardDestination,
+  PalletStakingStakingLedger,
   PalletStakingValidatorPrefs,
 } from 'dedot/chaintypes'
 import type { BytesLike } from 'dedot/codecs'
@@ -57,6 +58,7 @@ export interface CreditcoinServiceInterface {
       address: string
     ) => Promise<PalletStakingValidatorPrefs | undefined>
     bondedMulti: (addresses: string[]) => Promise<(string | undefined)[]>
+    ledgerMulti: (addresses: string[]) => Promise<(PalletStakingStakingLedger | undefined)[]>
   }
   runtimeApi: {
     balanceToPoints: (poolId: number, amount: bigint) => Promise<bigint>

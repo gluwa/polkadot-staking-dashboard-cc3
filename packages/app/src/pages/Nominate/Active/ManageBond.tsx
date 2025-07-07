@@ -102,7 +102,7 @@ export const ManageBond = () => {
           <Token />
           <Odometer
             value={minDecimalPlaces(
-              new BigNumber(planckToUnit(active, units)).toFormat(),
+              new BigNumber(planckToUnit(active, units)).toFormat(2),
               2
             )}
             zeroDecimals={2}

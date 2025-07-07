@@ -26,9 +26,9 @@ export const UnclaimedPayoutsStatus = ({ dimmed }: { dimmed: boolean }) => {
   const { units } = getNetworkData(network)
 
   const totalUnclaimed = Object.values(unclaimedPayouts || {}).reduce(
-    (total, paginatedValidators) =>
-      Object.values(paginatedValidators)
-        .reduce((amount, [, value]) => amount.plus(value), new BigNumber(0))
+    (total, validators) =>
+      Object.values(validators)
+        .reduce((amount, value) => amount.plus(value), new BigNumber(0))
         .plus(total),
     new BigNumber(0)
   )
@@ -40,7 +40,7 @@ export const UnclaimedPayoutsStatus = ({ dimmed }: { dimmed: boolean }) => {
       type="odometer"
       stat={{
         value: minDecimalPlaces(
-          planckToUnitBn(totalUnclaimed, units).toFormat(),
+          planckToUnitBn(totalUnclaimed, units).toFormat(2),
           2
         ),
       }}

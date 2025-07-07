@@ -54,7 +54,7 @@ const processEraForExposure = (data: ProcessEraForExposureArgs) => {
     const others = val?.others ?? []
     const own = val?.own || '0'
     const total = val?.total || '0'
-    const isValidator = validator === who
+    const isValidator = who !== null && validator === who.address
 
     if (isValidator) {
       const share = new BigNumber(own).isZero()
@@ -76,10 +76,10 @@ const processEraForExposure = (data: ProcessEraForExposureArgs) => {
       }
     }
 
-    const inOthers = others.find((o) => o.who === who)
+    const inOthers = others.find((o) => o.who === who?.address)
 
     if (inOthers) {
-      const index = others.findIndex((o) => o.who === who)
+      const index = others.findIndex((o) => o.who === who?.address)
       const exposedPage = Math.floor(index / Number(maxExposurePageSize))
 
       const share =

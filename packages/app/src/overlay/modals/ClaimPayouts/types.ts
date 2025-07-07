@@ -13,7 +13,7 @@ export interface ItemProps {
 export interface ActivePayout {
   era: string
   payout: string
-  paginatedValidators: [number, string][]
+  paginatedValidators: [string, string][]
 }
 
 export interface OverviewProps {

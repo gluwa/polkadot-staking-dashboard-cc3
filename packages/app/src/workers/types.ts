@@ -6,7 +6,7 @@ import type {
   Exposure,
   Staker,
 } from 'contexts/Staking/types'
-import type { MaybeAddress, NetworkId } from 'types'
+import type { ActiveAccount, MaybeAddress, NetworkId } from 'types'
 
 export interface ProcessExposuresArgs {
   task: string
@@ -25,7 +25,7 @@ export interface ProcessExposuresResponse {
   totalActiveNominators: number
   activeAccountOwnStake: ActiveAccountStaker[]
   activeValidators: number
-  who: MaybeAddress
+  who: ActiveAccount
 }
 
 export interface ProcessEraForExposureArgs {
@@ -35,5 +35,5 @@ export interface ProcessEraForExposureArgs {
   exitOnExposed: boolean
   task: string
   networkName: NetworkId
-  who: MaybeAddress
+  who: ActiveAccount
 }

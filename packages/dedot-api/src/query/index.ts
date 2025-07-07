@@ -11,6 +11,7 @@ import { erasStakersOverviewEntries } from './erasStakersOverviewEntries'
 import { erasStakersPagedEntries } from './erasStakersPagedEntries'
 import { erasValidatorPrefs } from './erasValidatorPrefs'
 import { erasValidatorRewardMulti } from './erasValidatorRewardMulti'
+import { ledgerMulti } from './ledgerMulti'
 import { nominatorsMulti } from './nominatorsMulti'
 import { poolMembersMulti } from './poolMembersMulti'
 import { poolMetadataMulti } from './poolMetadataMulti'
@@ -37,4 +38,5 @@ export const query = {
   eraRewardPoints,
   erasValidatorPrefs,
   bondedMulti,
+  ledgerMulti,
 }

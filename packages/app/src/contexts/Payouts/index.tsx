@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { Sync } from '@w3ux/types'
-import { setStateWithRef } from '@w3ux/utils'
+import { rmCommas, setStateWithRef } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
 import type { AnyApi } from 'common-types'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
@@ -12,7 +12,6 @@ import { useStaking } from 'contexts/Staking'
 import type { ReactNode } from 'react'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { AnyJson } from 'types'
-import { perbillToPercent } from 'utils'
 import Worker from 'workers/stakers?worker'
 import { MaxSupportedPayoutEras, defaultPayoutsContext } from './defaults'
 import type {
@@ -116,7 +115,11 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
 
       // Exit early if network or account conditions have changed.
       const { networkName, who } = data
-      if (networkName !== network || who !== activeAccount) {
+      if (
+        networkName !== network ||
+        activeAccount === null ||
+        who.address !== activeAccount.address
+      ) {
         return
       }
       const { era, exposedValidators } = data
@@ -126,7 +129,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       setLocalEraExposure(
         networkName,
         era,
-        who,
+        who.address,
         exposedValidators,
         endEra.toString()
       )
@@ -168,10 +171,28 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       new BigNumber(b).minus(a).toNumber()
     )
 
+    // Helper function to check which eras a validator was exposed in.
+    const validatorExposedEras = (validator: string) => {
+      const exposedEras: string[] = []
+      for (const era of erasToCheck) {
+        if (
+          (
+            Object.values(
+              Object.keys(
+                getLocalEraExposure(network, era, activeAccount.address)
+              )
+            ) ?? []
+          ).includes(validator)
+        ) {
+          exposedEras.push(era)
+        }
+      }
+      return exposedEras
+    }
+
     // Fetch controllers in order to query ledgers.
     const bondedResultsMulti =
       await serviceApi.query.bondedMulti(uniqueValidators)
-
     const validatorControllers: Record<string, string> = {}
     for (let i = 0; i < bondedResultsMulti.length; i++) {
       const ctlr = bondedResultsMulti[i] || null
@@ -180,42 +201,33 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    // Unclaimed rewards by validator. Record<validator, eras[]>.
-    const unclaimedRewards: Record<string, string[]> = {}
-
-    // Refer to new `ClaimedRewards` storage item and calculate unclaimed rewards from that and
-    // `exposedPage` stored locally in exposure data.
-
-    // Accumulate calls to fetch unclaimed rewards for each era for all validators.
-    const unclaimedRewardsEntries = erasToCheck
-      .map((era) => uniqueValidators.map((v) => [era, v]))
-      .flat()
-
-    const results = await Promise.all(
-      unclaimedRewardsEntries.map(([era, v]) =>
-        serviceApi.query.claimedRewards(Number(era), v)
-      )
+    // Fetch ledgers to determine which eras have not yet been claimed per validator. Only includes
+    // eras that are in `erasToCheck`.
+    const ledgerResults = await serviceApi.query.ledgerMulti(
+      Object.values(validatorControllers)
     )
+    const unclaimedRewards: Record<string, string[]> = {}
+    for (const ledgerResult of ledgerResults) {
+      const ledger = ledgerResult
+      if (ledger) {
+        const rewards = ledger.legacyClaimedRewards
 
-    for (let i = 0; i < results.length; i++) {
-      const pages = results[i] || []
-      const era = unclaimedRewardsEntries[i][0]
-      const validator = unclaimedRewardsEntries[i][1]
-      const exposure = getLocalEraExposure(network, era, activeAccount.address)
-      const exposedPage =
-        exposure?.[validator]?.exposedPage !== undefined
-          ? Number(exposure[validator].exposedPage)
-          : undefined
+        // get claimed eras within `erasToCheck`.
+        const erasClaimed = rewards
+          .map((e) => rmCommas(e.toString()))
+          .filter(
+            (e: string) =>
+              new BigNumber(e).isLessThanOrEqualTo(startEra) &&
+              new BigNumber(e).isGreaterThanOrEqualTo(endEra)
+          )
 
-      // Add to `unclaimedRewards` if payout page has not yet been claimed.
-      if (exposedPage) {
-        if (!pages.includes(exposedPage)) {
-          if (unclaimedRewards?.[validator]) {
-            unclaimedRewards[validator].push(era)
-          } else {
-            unclaimedRewards[validator] = [era]
-          }
-        }
+        // filter eras yet to be claimed
+        unclaimedRewards[ledger.stash.address()] = erasToCheck
+          .map((e) => e.toString())
+          .filter((r: string) =>
+            validatorExposedEras(ledger.stash.address()).includes(r)
+          )
+          .filter((r: string) => !erasClaimed.includes(r))
       }
     }
 
@@ -250,25 +262,20 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
     })
 
     // Iterate calls and determine unclaimed payouts.
-    // `unclaimed`: Record<era, Record<validator, unclaimedPayout>>.
     const unclaimed: UnclaimedPayouts = {}
     let i = 0
-    for (const [reward, eraRewardPoints, ...prefs] of await Promise.all(
-      calls
-    )) {
+    for (const [reward, points, ...prefs] of await Promise.all(calls)) {
       const era = Object.keys(unclaimedByEra)[i]
-      const eraTotalPayout = new BigNumber(reward.toString())
+      const eraTotalPayout = new BigNumber(reward)
+      const eraRewardPoints = points
       const unclaimedValidators = unclaimedByEra[era]
 
       let j = 0
       for (const pref of prefs) {
-        const eraValidatorPrefs = {
-          commission: pref.commission,
-          blocked: pref.blocked,
-        }
+        const eraValidatorPrefs = pref
         const commission = new BigNumber(
-          perbillToPercent(eraValidatorPrefs.commission)
-        )
+          eraValidatorPrefs.commission
+        ).multipliedBy(0.01)
 
         // Get validator from era exposure data. Falls back no null if it cannot be found.
         const validator = unclaimedValidators?.[j] || ''
@@ -282,23 +289,19 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
         const staked = new BigNumber(localExposed?.staked || '0')
         const total = new BigNumber(localExposed?.total || '0')
         const isValidator = localExposed?.isValidator || false
-        const exposedPage = localExposed?.exposedPage || 0
 
         // Calculate the validator's share of total era payout.
-        const totalRewardPoints = new BigNumber(
-          eraRewardPoints.total.toString()
-        )
+        const totalRewardPoints = new BigNumber(eraRewardPoints.total)
         const validatorRewardPoints = new BigNumber(
-          eraRewardPoints.individual.find(
-            ([v]: [string]) => v === validator
-          )?.[1] || '0'
+          eraRewardPoints.individual.filter(
+            (e: { address: () => string }[]) => e[0].address() === validator
+          )[0][1] || '0'
         )
-
         const avail = eraTotalPayout
           .multipliedBy(validatorRewardPoints)
           .dividedBy(totalRewardPoints)
 
-        const valCut = commission.multipliedBy(0.01).multipliedBy(avail)
+        const valCut = commission.multipliedBy(avail)
 
         const unclaimedPayout = total.isZero()
           ? new BigNumber(0)
@@ -307,12 +310,11 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
               .multipliedBy(staked)
               .dividedBy(total)
               .plus(isValidator ? valCut : 0)
-              .integerValue(BigNumber.ROUND_DOWN)
 
         if (!unclaimedPayout.isZero()) {
           unclaimed[era] = {
             ...unclaimed[era],
-            [validator]: [exposedPage, unclaimedPayout.toString()],
+            [validator]: unclaimedPayout.toString(),
           }
           j++
         }

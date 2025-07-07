@@ -61,7 +61,11 @@ export const Forms = forwardRef(
           return acc
         }
         paginatedValidators.forEach(([page, v]) => {
-          const tx = serviceApi.tx.payoutStakersByPage(v, Number(era), page)
+          const tx = serviceApi.tx.payoutStakersByPage(
+            v,
+            Number(era),
+            Number(page)
+          )
 
           if (tx) {
             acc.push()
