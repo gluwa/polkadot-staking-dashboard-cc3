@@ -10,6 +10,7 @@ import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
 import { usePayouts } from 'contexts/Payouts'
 import { Subscan } from 'controllers/Subscan'
+import type { SubmittableExtrinsic } from 'dedot'
 import { useBatchCall } from 'hooks/useBatchCall'
 import { useSignerWarnings } from 'hooks/useSignerWarnings'
 import { useSubmitExtrinsic } from 'hooks/useSubmitExtrinsic'
@@ -56,24 +57,27 @@ export const Forms = forwardRef(
       ) || 0
 
     const getCalls = () => {
-      const calls = payouts?.reduce((acc, { era, paginatedValidators }) => {
-        if (!paginatedValidators) {
-          return acc
-        }
-        paginatedValidators.forEach(([page, v]) => {
-          const tx = serviceApi.tx.payoutStakersByPage(
-            v,
-            Number(era),
-            Number(page)
-          )
-
-          if (tx) {
-            acc.push()
-          }
-        })
-        return acc
-      }, [])
-      return calls || []
+      const calls =
+        payouts?.reduce(
+          (acc: SubmittableExtrinsic[], { era, paginatedValidators }) => {
+            if (!paginatedValidators.length) {
+              return acc
+            }
+            paginatedValidators.forEach(([page, v]) => {
+              const tx = serviceApi.tx.payoutStakersByPage(
+                v,
+                Number(era),
+                Number(page)
+              )
+              if (tx) {
+                acc.push(tx)
+              }
+            })
+            return acc
+          },
+          []
+        ) || []
+      return calls
     }
 
     // Store whether form is valid to submit transaction.
