@@ -292,10 +292,11 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
 
         // Calculate the validator's share of total era payout.
         const totalRewardPoints = new BigNumber(eraRewardPoints.total)
+        const filteredRewardPoints = eraRewardPoints.individual.filter(
+          (e: { address: () => string }[]) => e[0].address() === validator
+        )
         const validatorRewardPoints = new BigNumber(
-          eraRewardPoints.individual.filter(
-            (e: { address: () => string }[]) => e[0].address() === validator
-          )[0][1] || '0'
+          filteredRewardPoints.length > 0 ? filteredRewardPoints[0][1] : '0'
         )
         const avail = eraTotalPayout
           .multipliedBy(validatorRewardPoints)
