@@ -30,11 +30,14 @@ export type SuperOf =
     }
   | undefined
 
-export interface Identity {
-  deposit: string
-  info: AnyJson
-  judgements: AnyJson[]
+export interface IdentityItem {
+  deposit: string;
+  info: AnyJson;
+  judgements: AnyJson[];
 }
+
+// New structure: Identity is now an array where [0] contains the identity object
+export type Identity = [IdentityItem | null, null] | null;
 
 export interface SuperIdentity {
   superOf: {

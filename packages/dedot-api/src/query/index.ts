@@ -5,6 +5,7 @@ import { bondedMulti } from './bondedMulti'
 import { bondedPool } from './bondedPool'
 import { bondedPoolEntries } from './bondedPoolEntries'
 import { claimedRewards } from './claimedRewards'
+import { claimedRewardsMulti } from './claimedRewardsMulti'
 import { eraRewardPoints } from './eraRewardPoints'
 import { erasRewardPointsMulti } from './erasRewardPointsMulti'
 import { erasStakersOverviewEntries } from './erasStakersOverviewEntries'
@@ -39,4 +40,5 @@ export const query = {
   erasValidatorPrefs,
   bondedMulti,
   ledgerMulti,
+  claimedRewardsMulti,
 }

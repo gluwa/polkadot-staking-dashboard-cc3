@@ -14,6 +14,7 @@ import type {
   PoolCommissionContextInterface,
   PoolCommissionProviderProps,
 } from './types'
+import { useApi } from 'contexts/Api'
 
 export const PoolCommissionContext =
   createContext<PoolCommissionContextInterface>(defaultPoolCommissionContext)
@@ -27,6 +28,7 @@ export const PoolCommissionProvider = ({
   const { getBondedPool } = useBondedPools()
   const poolId = activePool?.id || 0
   const bondedPool = getBondedPool(poolId)
+  const { globalMaxCommission } = useApi().poolsConfig
 
   // Get initial commission value from the bonded pool commission config.
   const initialCommission = bondedPool?.commission?.current?.[0] || 0
@@ -35,9 +37,18 @@ export const PoolCommissionProvider = ({
   const initialPayee = bondedPool?.commission?.current?.[1] || null
 
   // Get initial maximum commission value from the bonded pool commission config.
-  const initialMaxCommission = Number(
-    (bondedPool?.commission?.max || '100').toString()
-  )
+  const initialMaxCommission = (() => {
+    const maxCommissionValue = bondedPool?.commission?.max;
+    if (maxCommissionValue !== undefined) {
+      // Handle string values (e.g., "100%" -> "100")
+      if (typeof maxCommissionValue === 'string') {
+        return Number((maxCommissionValue as string).slice(0, -1));
+      }
+      // Handle numeric values
+      return Number(maxCommissionValue);
+    }
+    return globalMaxCommission;
+  })();
 
   // Get initial change rate value from the bonded pool commission config.
   const initialChangeRate = ((): ChangeRateInput => {
