@@ -13,4 +13,12 @@ export const chainIcons: Record<NetworkId, ChainIcons> = {
       size: '0.96em',
     },
   },
+  'creditcoin3-testnet': {
+    icon: CreditcoinTokenSVG,
+    token: CreditcoinTokenSVG,
+    inline: {
+      svg: CreditcoinTokenSVG,
+      size: '0.96em',
+    },
+  },
 }

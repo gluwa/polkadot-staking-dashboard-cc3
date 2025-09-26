@@ -5,4 +5,5 @@ import { CreditcoinService } from './creditcoin'
 
 export const Services = {
   'creditcoin3-dev': CreditcoinService,
+  'creditcoin3-testnet': CreditcoinService,
 }

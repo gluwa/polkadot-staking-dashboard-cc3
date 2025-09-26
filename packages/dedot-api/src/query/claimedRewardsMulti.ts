@@ -10,9 +10,12 @@ export const claimedRewardsMulti = async <T extends StakingChain>(
   eraAddressPairs: Array<[string, string]>
 ) => {
   // Create the correct parameter format for multi query
-  const params = eraAddressPairs.map(([era, address]) => [parseInt(era), new AccountId32(address)] as [number, AccountId32])
+  const params = eraAddressPairs.map(
+    ([era, address]) =>
+      [parseInt(era), new AccountId32(address)] as [number, AccountId32]
+  )
   const result = await api.query.staking.claimedRewards.multi(params)
-  
+
   // Return just the claimed rewards data as expected by the interface
   return result
 }

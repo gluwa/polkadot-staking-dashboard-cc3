@@ -7,7 +7,7 @@ import type { FunctionComponent, SVGProps } from 'react'
 
 export type ChainId = NetworkId
 
-export type NetworkId = 'creditcoin3-dev'
+export type NetworkId = 'creditcoin3-dev' | 'creditcoin3-testnet'
 
 export type ProviderType = 'ws' | 'sc'
 

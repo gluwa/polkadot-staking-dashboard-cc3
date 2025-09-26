@@ -21,4 +21,17 @@ export const NetworkList: Networks = {
     ss58: 42,
     defaultFeeReserve: 100000000000000000n,
   },
+  'creditcoin3-testnet': {
+    name: 'creditcoin3-testnet',
+    endpoints: {
+      lightClient: async () => null,
+      rpc: {
+        'CC3-Testnet': 'wss://rpc.cc3-testnet.creditcoin.network/ws',
+      },
+    },
+    unit: 'CTC',
+    units: 18,
+    ss58: 42,
+    defaultFeeReserve: 100000000000000000n,
+  },
 }
