@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { Sync } from '@w3ux/types'
-import { rmCommas, setStateWithRef } from '@w3ux/utils'
+import { setStateWithRef } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
 import type { AnyApi } from 'common-types'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
 import { useStaking } from 'contexts/Staking'
+import type { PalletStakingStakingLedger } from 'dedot/chaintypes'
 import type { ReactNode } from 'react'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { AnyJson } from 'types'
@@ -208,79 +209,77 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
     )
     const unclaimedRewards: Record<string, string[]> = {}
     // First, collect all the multicall parameters for claimedRewards
-    const claimedRewardsCalls: Array<[string, string]> = []; // [era, controller]
-    const ledgerMap: Record<string, any> = {};
+    const claimedRewardsCalls: Array<[string, string]> = [] // [era, controller]
+    const ledgerMap: Record<string, PalletStakingStakingLedger> = {}
 
     for (const ledgerResult of ledgerResults) {
       const ledger = ledgerResult
       if (ledger) {
-        const stash = ledger.stash;
+        const stash = ledger.stash
 
         if (stash) {
-          ledgerMap[stash.raw.toString()] = ledger;
+          ledgerMap[stash.raw.toString()] = ledger
 
           // Get eras to check for this validator
           const erasToCheckForValidator = erasToCheck
             .map((e) => e.toString())
-            .filter((r: string) => validatorExposedEras(stash.raw.toString()).includes(r));
+            .filter((r: string) =>
+              validatorExposedEras(stash.raw.toString()).includes(r)
+            )
 
           // Add to multicall parameters
           erasToCheckForValidator.forEach((era) => {
-            claimedRewardsCalls.push([era, stash.raw.toString()]);
-          });
+            claimedRewardsCalls.push([era, stash.raw.toString()])
+          })
         }
       }
     }
 
     // Execute multicall for claimedRewards
-    const claimedRewardsResults =
-      await serviceApi.query.claimedRewardsMulti(
-        claimedRewardsCalls.map(([era, controller]) => [era, controller])
-      );
+    const claimedRewardsResults = await serviceApi.query.claimedRewardsMulti(
+      claimedRewardsCalls.map(([era, controller]) => [era, controller])
+    )
 
     // Process results for each validator
-    let callIndex = 0;
+    let callIndex = 0
     for (const [stash, ledger] of Object.entries(ledgerMap)) {
-      const legacyRewards = ledger.legacyClaimedRewards || [];
+      const legacyRewards = ledger.legacyClaimedRewards || []
       const legacyErasClaimed = legacyRewards
-        .map((e: string) => rmCommas(e))
+        .map((e: number) => e.toString())
         .filter(
           (e: string) =>
             new BigNumber(e).isLessThanOrEqualTo(startEra) &&
             new BigNumber(e).isGreaterThanOrEqualTo(endEra)
-        );
+        )
 
       // Get eras to check for this validator
       const erasToCheckForValidator = erasToCheck
         .map((e) => e.toString())
-        .filter((r: string) => validatorExposedEras(stash).includes(r));
+        .filter((r: string) => validatorExposedEras(stash).includes(r))
 
       // Get results for this validator's eras
       const validatorResults = claimedRewardsResults.slice(
         callIndex,
         callIndex + erasToCheckForValidator.length
-      );
-      callIndex += erasToCheckForValidator.length;
+      )
+      callIndex += erasToCheckForValidator.length
 
       // Filter out eras that were claimed after upgrade
       const postUpgradeClaimedEras = erasToCheckForValidator.filter(
         (era, index) => {
-          const result = validatorResults[index];
+          const result = validatorResults[index]
           // If result is not null/empty, it means the era was claimed after upgrade
-          return result && result.length > 0;
+          return result && result.length > 0
         }
-      );
+      )
 
       // Combine legacy claimed eras with post-upgrade claimed eras
-      const allClaimedEras = [
-        ...legacyErasClaimed,
-        ...postUpgradeClaimedEras,
-      ];
+      const allClaimedEras = [...legacyErasClaimed, ...postUpgradeClaimedEras]
 
       // Filter eras yet to be claimed
       unclaimedRewards[stash] = erasToCheckForValidator.filter(
         (r: string) => !allClaimedEras.includes(r)
-      );
+      )
     }
 
     // Reformat unclaimed rewards to be { era: validators[] }.
