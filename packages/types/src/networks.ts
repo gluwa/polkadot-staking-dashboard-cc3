@@ -91,8 +91,6 @@ export interface NetworkConfig {
 export interface Network {
   name: NetworkId
   endpoints: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lightClient: () => Promise<any>
     rpc: Record<string, string>
   }
   unit: string

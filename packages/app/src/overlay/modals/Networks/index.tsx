@@ -31,11 +31,9 @@ export const Networks = () => {
   const { isBraveBrowser } = useUi()
   const { openPromptWith } = usePrompt()
   const { network, switchNetwork } = useNetwork()
-  const { providerType, getRpcEndpoint } = useApi()
+  const { getRpcEndpoint } = useApi()
   const { setModalStatus, setModalResize } = useOverlay().modal
   const networkKey = network
-
-  const isLightClient = providerType === 'sc'
 
   // Likely never going to happen; here just to be safe.
   useEffect(() => setModalResize(), [isBraveBrowser])
@@ -88,23 +86,6 @@ export const Networks = () => {
           <ConnectionsWrapper>
             <div>
               <ConnectionButton
-                $connected={isLightClient}
-                className="off"
-                type="button"
-                onClick={() => {
-                  setProviderType('sc')
-                  switchNetwork(networkKey as NetworkId)
-                  setModalStatus('closing')
-                }}
-              >
-                <h3>{t('lightClient')}</h3>
-                {isLightClient && <h4 className="selected">{t('selected')}</h4>}
-              </ConnectionButton>
-            </div>
-            <div>
-              <ConnectionButton
-                $connected={!isLightClient}
-                disabled={!isLightClient}
                 type="button"
                 onClick={() => {
                   setProviderType('ws')
@@ -113,9 +94,7 @@ export const Networks = () => {
                 }}
               >
                 <h3>RPC</h3>
-                {!isLightClient && (
-                  <h4 className="selected">{t('selected')}</h4>
-                )}
+                <h4 className="selected">{t('selected')}</h4>
               </ConnectionButton>
               <div className="provider">
                 <p>{t('provider')}:</p>

@@ -9,4 +9,4 @@ import type { Plugin } from 'types'
 // you can remove it from this list
 export const CompulsoryPluginsProduction: Plugin[] = ['subscan']
 
-export const PluginsList: Plugin[] = ['subscan', 'polkawatch']
+export const PluginsList: Plugin[] = ['subscan']

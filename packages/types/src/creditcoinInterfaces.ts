@@ -58,8 +58,12 @@ export interface CreditcoinServiceInterface {
       address: string
     ) => Promise<PalletStakingValidatorPrefs | undefined>
     bondedMulti: (addresses: string[]) => Promise<(string | undefined)[]>
-    ledgerMulti: (addresses: string[]) => Promise<(PalletStakingStakingLedger | undefined)[]>
-    claimedRewardsMulti: (eraAddressPairs: Array<[string, string]>) => Promise<number[][]>
+    ledgerMulti: (
+      addresses: string[]
+    ) => Promise<(PalletStakingStakingLedger | undefined)[]>
+    claimedRewardsMulti: (
+      eraAddressPairs: Array<[string, string]>
+    ) => Promise<number[][]>
   }
   runtimeApi: {
     balanceToPoints: (poolId: number, amount: bigint) => Promise<bigint>
