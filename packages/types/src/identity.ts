@@ -28,12 +28,9 @@ export interface IdentityItem {
 export type Identity = [IdentityItem | null, null] | null
 
 export interface SuperIdentity {
-  superOf: {
-    identity: IdentityOf
-    value: {
-      type: string
-      value?: string
-    }
+  identity: IdentityOf
+  value: {
+    type: string
+    value?: string
   }
-  value: string
 }

@@ -96,6 +96,16 @@ export const LogoWrapper = styled.button<MinimisedProps>`
     .logo {
       width: auto;
       height: ${(props) => (props.$minimised ? '2.15rem' : '1.45rem')};
+
+      svg {
+        /* Default: make logo white for dark theme */
+        filter: brightness(0) saturate(100%) invert(1);
+      }
+    }
+
+    /* For light theme, make logo darker */
+    .theme-light & .logo svg {
+      filter: brightness(0) saturate(100%) invert(0);
     }
   }
 
@@ -103,6 +113,15 @@ export const LogoWrapper = styled.button<MinimisedProps>`
     > .toggle > .label {
       color: var(--accent-color-primary);
     }
+  }
+
+  /* Mini logo styling for theme compatibility */
+  svg {
+    filter: brightness(0) saturate(100%) invert(1);
+  }
+
+  .theme-light & svg {
+    filter: brightness(0) saturate(100%) invert(0);
   }
 `
 

@@ -8,7 +8,7 @@ import BigNumber from 'bignumber.js'
 import { fromUnixTime } from 'date-fns'
 import { bnToU8a, concatU8a, encodeAddress, stringToU8a } from 'dedot/utils'
 import type { TFunction } from 'i18next'
-import type { IdentityOf, SuperIdentity, SuperOf } from 'types'
+import type { IdentityOf } from 'types'
 
 // Return `planckToUnit` as a BigNumber
 export const planckToUnitBn = (val: BigNumber, units: number): BigNumber =>
@@ -100,22 +100,6 @@ export const formatIdentities = (
 ) =>
   identities.reduce((acc: Record<string, IdentityOf | undefined>, cur, i) => {
     acc[addresses[i]] = cur
-    return acc
-  }, {})
-
-// Format super identities into records with addresses as keys
-export const formatSuperIdentities = (supers: SuperOf[]) =>
-  supers.reduce((acc: Record<string, SuperIdentity>, cur) => {
-    if (!cur) {
-      return acc
-    }
-    acc[cur.address] = {
-      superOf: {
-        identity: cur.identity,
-        value: cur.value,
-      },
-      value: cur.value?.value || '',
-    }
     return acc
   }, {})
 

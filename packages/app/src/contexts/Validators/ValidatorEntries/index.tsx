@@ -5,6 +5,7 @@ import { createSafeContext, useEffectIgnoreInitial } from '@w3ux/hooks'
 import type { Sync } from '@w3ux/types'
 import { shuffle } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
+import type { AnyApi } from 'common-types'
 import { MaxEraRewardPointsEras } from 'consts'
 import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
@@ -23,7 +24,7 @@ import type {
   Validator,
   ValidatorStatus,
 } from 'types'
-import { perbillToPercent } from 'utils'
+import { formatIdentities, perbillToPercent } from 'utils'
 import type {
   EraPointsBoundaries,
   EraRewardPoints,
@@ -273,6 +274,89 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     return { entries, notFullCommissionCount, totalNonAllCommission }
   }
 
+  // Fetch validator super accounts and their identities
+  const fetchValidatorSupers = async (addresses: string[]) => {
+    if (!isReady || !addresses.length) {
+      return {}
+    }
+
+    try {
+      // Get super accounts for each address
+      const supersRaw = await serviceApi.query.superOfMulti(addresses)
+
+      const supers = Object.fromEntries(
+        Object.entries(
+          Object.fromEntries(
+            supersRaw.map((k, i) => [
+              addresses[i],
+              {
+                superOf: k,
+              },
+            ])
+          )
+        ).filter(([, { superOf }]) => superOf !== undefined)
+      )
+
+      const superIdentities = (
+        await serviceApi.query.identityOfMulti(
+          Object.values(supers).map(({ superOf }) => {
+            if (superOf && Array.isArray(superOf) && superOf[0]) {
+              // Handle AccountId32 object
+              const accountId = superOf[0]
+              return accountId.address ? accountId.address() : String(accountId)
+            }
+            return ''
+          })
+        )
+      ).map((superIdentity) => superIdentity)
+
+      const supersWithIdentity = Object.fromEntries(
+        Object.entries(supers).map(([k, v]: AnyApi, i) => [
+          k,
+          {
+            ...v,
+            identity: superIdentities[i],
+          },
+        ])
+      )
+      return supersWithIdentity
+    } catch (error) {
+      console.error('Error fetching validator supers:', error)
+      return {}
+    }
+  }
+
+  // Fetches identity data for a list of validator addresses
+  const fetchValidatorIdentities = async (addresses: string[]) => {
+    if (!isReady || !addresses.length) {
+      return
+    }
+
+    try {
+      // Fetch identities and super identities in parallel
+      const [identities, supersWithIdentity] = await Promise.all([
+        serviceApi.query.identityOfMulti(addresses),
+        fetchValidatorSupers(addresses),
+      ])
+
+      // Format the results
+      const formattedIdentities = formatIdentities(addresses, identities)
+
+      // Filter out undefined values to match the expected type
+      const validIdentities = Object.fromEntries(
+        Object.entries(formattedIdentities).filter(
+          ([, value]) => value !== undefined
+        )
+      ) as Record<string, IdentityOf>
+
+      // Update state
+      setValidatorIdentities((prev) => ({ ...prev, ...validIdentities }))
+      setValidatorSupers((prev) => ({ ...prev, ...supersWithIdentity }))
+    } catch (error) {
+      console.error('Error fetching validator identities:', error)
+    }
+  }
+
   // Fetches and formats the active validator set, and derives metrics from the result
   const fetchValidators = async () => {
     if (!isReady || validators.status !== 'unsynced') {
@@ -318,6 +402,10 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     setAvgCommission(avg)
     // NOTE: validators are shuffled before committed to state
     setValidators({ status: 'synced', validators: shuffle(validatorEntries) })
+
+    // Fetch identity data for all validators
+    const validatorAddresses = validatorEntries.map((v) => v.address)
+    await fetchValidatorIdentities(validatorAddresses)
   }
 
   // Subscribe to active session validators
@@ -327,6 +415,9 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
     }
     const result = await serviceApi.query.sessionValidators()
     setSessionValidators(result)
+
+    // Fetch identity data for session validators
+    await fetchValidatorIdentities(result)
   }
 
   // Gets era points for a validator
