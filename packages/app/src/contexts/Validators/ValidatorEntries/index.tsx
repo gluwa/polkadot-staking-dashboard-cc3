@@ -248,7 +248,13 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
       return defaultValidatorsData
     }
 
-    const result = await serviceApi.query.validatorEntries()
+    let result
+    try {
+      result = await serviceApi.query.validatorEntries()
+    } catch (error) {
+      console.error('Error fetching validator entries:', error)
+      return defaultValidatorsData
+    }
 
     const entries: Validator[] = []
     let notFullCommissionCount = 0
@@ -258,7 +264,6 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
 
       if (!commissionAsPercent.isEqualTo(100)) {
         totalNonAllCommission = totalNonAllCommission.plus(commissionAsPercent)
-      } else {
         notFullCommissionCount++
       }
 
@@ -359,9 +364,15 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetches and formats the active validator set, and derives metrics from the result
   const fetchValidators = async () => {
-    if (!isReady || validators.status !== 'unsynced') {
+    if (!isReady) {
       return
     }
+
+    // If already syncing, don't start another sync
+    if (validators.status === 'syncing') {
+      return
+    }
+
     setValidatorsFetched('syncing')
 
     // If local validator entries exist for the current era, store these values in state. Otherwise,
