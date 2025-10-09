@@ -52,8 +52,10 @@ export const BalanceChart = () => {
   const frozenBn = new BigNumber(frozen)
   const reservedBn = new BigNumber(reserved)
 
+  // Total balance should be the free balance (which includes both staked and unstaked)
+  // The free balance already represents the total available funds
   const totalBalance = planckToUnitBn(
-    freeBn.plus(total).plus(poolBondOpions.active).plus(unlockingPools),
+    freeBn.plus(poolBondOpions.active).plus(unlockingPools),
     units
   )
 
@@ -76,7 +78,9 @@ export const BalanceChart = () => {
   const inPool = planckToUnitBn(inPoolPlanck, units)
   const freeBalanceBn = planckToUnitBn(freeBalancePlanck, units)
 
-  const graphTotal = nominating.plus(inPool).plus(freeBalanceBn)
+  // Calculate the actual "Not Staking" amount (free balance minus staked amount)
+  const notStakingAmount = planckToUnitBn(freeBn.minus(total), units)
+  const graphTotal = nominating.plus(inPool).plus(notStakingAmount)
   const graphNominating = nominating.isGreaterThan(0)
     ? nominating.dividedBy(graphTotal.multipliedBy(0.01))
     : new BigNumber(0)
@@ -96,9 +100,6 @@ export const BalanceChart = () => {
   const fundsLocked = planckToUnitBn(maxLockedBn, units)
 
   const fundsFree = planckToUnitBn(freeBalancePlanck, units)
-  const fundsTransferrable = new BigNumber(
-    planckToUnit(allTransferOptions.transferrableBalance, units)
-  )
 
   // Available balance percentages.
   const graphLocked = fundsLocked.isGreaterThan(0)
@@ -159,7 +160,7 @@ export const BalanceChart = () => {
             dataClass="d4"
             widthPercent={Number(graphNotStaking.toFixed(2))}
             flexGrow={!isNominating && !inPool ? 1 : 0}
-            label={`${freeBalanceBn.decimalPlaces(3).toFormat()} ${unit}`}
+            label={`${notStakingAmount.decimalPlaces(3).toFormat()} ${unit}`}
             forceShow={!isNominating && !isInPool}
           />
         </Bar>
@@ -183,7 +184,7 @@ export const BalanceChart = () => {
                 dataClass="d4"
                 widthPercent={100}
                 flexGrow={1}
-                label={`${fundsTransferrable.decimalPlaces(3).toFormat()} ${unit}`}
+                label={`${notStakingAmount.decimalPlaces(3).toFormat()} ${unit}`}
               />
             </Bar>
           </div>
