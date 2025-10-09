@@ -212,25 +212,41 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
     const claimedRewardsCalls: Array<[string, string]> = [] // [era, controller]
     const ledgerMap: Record<string, PalletStakingStakingLedger> = {}
 
+    // Create mapping from stash address back to original validator address
+    const stashToValidatorMap: Record<string, string> = {}
+
     for (const ledgerResult of ledgerResults) {
       const ledger = ledgerResult
       if (ledger) {
         const stash = ledger.stash
 
         if (stash) {
-          ledgerMap[stash.raw.toString()] = ledger
+          const stashAddress = stash.raw.toString()
+          ledgerMap[stashAddress] = ledger
 
-          // Get eras to check for this validator
-          const erasToCheckForValidator = erasToCheck
-            .map((e) => e.toString())
-            .filter((r: string) =>
-              validatorExposedEras(stash.raw.toString()).includes(r)
-            )
+          // Find the original validator address by matching the stash address
+          // The stash address should match one of our validator addresses
+          const originalValidatorAddress = uniqueValidators.find(
+            (validator) =>
+              // Convert validator address to hex format to match stash address
+              validator === stashAddress || validator === stash.address()
+          )
 
-          // Add to multicall parameters
-          erasToCheckForValidator.forEach((era) => {
-            claimedRewardsCalls.push([era, stash.raw.toString()])
-          })
+          if (originalValidatorAddress) {
+            stashToValidatorMap[stashAddress] = originalValidatorAddress
+
+            // Get eras to check for this validator using the original validator address
+            const erasToCheckForValidator = erasToCheck
+              .map((e) => e.toString())
+              .filter((r: string) =>
+                validatorExposedEras(originalValidatorAddress).includes(r)
+              )
+
+            // Add to multicall parameters
+            erasToCheckForValidator.forEach((era) => {
+              claimedRewardsCalls.push([era, stashAddress])
+            })
+          }
         }
       }
     }
@@ -243,6 +259,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
     // Process results for each validator
     let callIndex = 0
     for (const [stash, ledger] of Object.entries(ledgerMap)) {
+      const originalValidatorAddress = stashToValidatorMap[stash]
       const legacyRewards = ledger.legacyClaimedRewards || []
       const legacyErasClaimed = legacyRewards
         .map((e: number) => e.toString())
@@ -252,10 +269,12 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
             new BigNumber(e).isGreaterThanOrEqualTo(endEra)
         )
 
-      // Get eras to check for this validator
+      // Get eras to check for this validator using the original validator address
       const erasToCheckForValidator = erasToCheck
         .map((e) => e.toString())
-        .filter((r: string) => validatorExposedEras(stash).includes(r))
+        .filter((r: string) =>
+          validatorExposedEras(originalValidatorAddress).includes(r)
+        )
 
       // Get results for this validator's eras
       const validatorResults = claimedRewardsResults.slice(
@@ -277,9 +296,10 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       const allClaimedEras = [...legacyErasClaimed, ...postUpgradeClaimedEras]
 
       // Filter eras yet to be claimed
-      unclaimedRewards[stash] = erasToCheckForValidator.filter(
+      const unclaimedEras = erasToCheckForValidator.filter(
         (r: string) => !allClaimedEras.includes(r)
       )
+      unclaimedRewards[originalValidatorAddress] = unclaimedEras
     }
 
     // Reformat unclaimed rewards to be { era: validators[] }.
