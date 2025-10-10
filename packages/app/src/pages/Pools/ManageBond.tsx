@@ -8,6 +8,7 @@ import { getChainIcons } from 'assets'
 import BigNumber from 'bignumber.js'
 import { getNetworkData } from 'consts/util'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
+import { useBalances } from 'contexts/Balances'
 import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts'
 import { useHelp } from 'contexts/Help'
 import { useNetwork } from 'contexts/Network'
@@ -37,8 +38,16 @@ export const ManageBond = () => {
   const allTransferOptions = getTransferOptions(activeAddress)
   const {
     pool: { active, totalUnlocking, totalUnlocked },
-    transferrableBalance,
+    freeBalance,
   } = allTransferOptions
+
+  // Get staking ledger to calculate correct available amount
+  const { getStakingLedger } = useBalances()
+  const stakingLedger = getStakingLedger(activeAddress)
+  const total = stakingLedger?.ledger?.total || 0n
+
+  // Calculate available amount (free balance minus staked amount)
+  const availableAmount = freeBalance - total
   const { state } = activePool?.bondedPool || {}
 
   const bondDisabled =
@@ -111,7 +120,7 @@ export const ManageBond = () => {
         active={new BigNumber(planckToUnit(active, units))}
         unlocking={new BigNumber(planckToUnit(totalUnlocking, units))}
         unlocked={new BigNumber(planckToUnit(totalUnlocked, units))}
-        free={new BigNumber(planckToUnit(transferrableBalance, units))}
+        free={new BigNumber(planckToUnit(availableAmount, units))}
         inactive={active === 0n}
       />
     </>

@@ -54,10 +54,14 @@ export const ManageBond = () => {
   const { units } = getNetworkData(network)
   const Token = getChainIcons(network).token
   const active = ledger?.active || 0n
+  const total = ledger?.total || 0n
   const allTransferOptions = getTransferOptions(activeAddress)
 
   const { freeBalance } = allTransferOptions
   const { totalUnlocking, totalUnlocked } = allTransferOptions.nominate
+
+  // Calculate available amount (free balance minus staked amount)
+  const availableAmount = freeBalance - total
   const nominationStatus = getNominationStatus(activeAddress, 'nominator')
 
   // Determine whether to display fast unstake button or regular unstake button.
@@ -147,7 +151,7 @@ export const ManageBond = () => {
         active={new BigNumber(planckToUnit(active, units))}
         unlocking={new BigNumber(planckToUnit(totalUnlocking, units))}
         unlocked={new BigNumber(planckToUnit(totalUnlocked, units))}
-        free={new BigNumber(planckToUnit(freeBalance, units))}
+        free={new BigNumber(planckToUnit(availableAmount, units))}
         inactive={active === 0n}
       />
     </>

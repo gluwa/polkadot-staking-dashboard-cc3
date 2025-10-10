@@ -2,4 +2,4 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 // Available plugin keys
-export type Plugin = 'subscan' | 'polkawatch'
+export type Plugin = 'subscan'

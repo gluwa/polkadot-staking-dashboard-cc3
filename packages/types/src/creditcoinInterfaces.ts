@@ -14,6 +14,7 @@ import type { BytesLike } from 'dedot/codecs'
 import type { Shape } from 'dedot/shape'
 import type { PayloadOptions } from 'dedot/types'
 import type { HexString } from 'dedot/utils'
+import type { IdentityOf, SuperOf } from './identity'
 import type { NominatorsMultiQuery } from './nominate'
 import type { BondedPoolQuery, ClaimPermission, PoolRoles } from './pools'
 import type {
@@ -58,8 +59,16 @@ export interface CreditcoinServiceInterface {
       address: string
     ) => Promise<PalletStakingValidatorPrefs | undefined>
     bondedMulti: (addresses: string[]) => Promise<(string | undefined)[]>
-    ledgerMulti: (addresses: string[]) => Promise<(PalletStakingStakingLedger | undefined)[]>
-    claimedRewardsMulti: (eraAddressPairs: Array<[string, string]>) => Promise<number[][]>
+    ledgerMulti: (
+      addresses: string[]
+    ) => Promise<(PalletStakingStakingLedger | undefined)[]>
+    claimedRewardsMulti: (
+      eraAddressPairs: Array<[string, string]>
+    ) => Promise<number[][]>
+    identityOf: (address: string) => Promise<IdentityOf>
+    identityOfMulti: (addresses: string[]) => Promise<IdentityOf[]>
+    superOf: (address: string) => Promise<SuperOf>
+    superOfMulti: (addresses: string[]) => Promise<SuperOf[]>
   }
   runtimeApi: {
     balanceToPoints: (poolId: number, amount: bigint) => Promise<bigint>

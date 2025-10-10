@@ -11,7 +11,6 @@ export const NetworkList: Networks = {
   'creditcoin3-dev': {
     name: 'creditcoin3-dev',
     endpoints: {
-      lightClient: async () => null,
       rpc: {
         'CC3-Devnet': 'wss://rpc.cc3-devnet.creditcoin.network/ws',
       },
@@ -24,7 +23,6 @@ export const NetworkList: Networks = {
   'creditcoin3-testnet': {
     name: 'creditcoin3-testnet',
     endpoints: {
-      lightClient: async () => null,
       rpc: {
         'CC3-Testnet': 'wss://rpc.cc3-testnet.creditcoin.network/ws',
       },

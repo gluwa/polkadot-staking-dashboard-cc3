@@ -11,10 +11,12 @@
     &:first-child {
       width: 3rem;
       max-width: 3rem;
+      flex-shrink: 0;
     }
     &:last-child {
-      padding-left: 0.8rem;
+      padding-left: 1rem;
       flex: 1;
+      min-width: 0;
       > h1 {
         color: var(--text-color-secondary);
         font-family: InterBold, sans-serif;

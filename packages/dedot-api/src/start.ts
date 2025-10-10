@@ -6,23 +6,21 @@ import { LegacyClient, WsProvider } from 'dedot'
 import { setMultiApiStatus } from 'global-bus'
 import type { NetworkConfig, NetworkId } from 'types'
 import { Services } from './services'
-import { newRelayChainSmProvider } from './smoldot/providers'
 import type { Service } from './types'
 import type { CreditcoinDefaultService } from './types/creditcoinDefault'
 
 // Determines service class and apis for a network
 export const getDefaultService = async <T extends NetworkId>(
   network: T,
-  { rpcEndpoints, providerType }: Omit<NetworkConfig, 'network'>
+  { rpcEndpoints }: Omit<NetworkConfig, 'network'>
 ): Promise<CreditcoinDefaultService<T>> => {
   const relayData = getNetworkData(network)
 
   const ids = [network] as [NetworkId]
 
-  const relayProvider =
-    providerType === 'ws'
-      ? new WsProvider(relayData.endpoints.rpc[rpcEndpoints[network]])
-      : await newRelayChainSmProvider(relayData)
+  const relayProvider = new WsProvider(
+    relayData.endpoints.rpc[rpcEndpoints[network]]
+  )
 
   setMultiApiStatus({
     [network]: 'connecting',

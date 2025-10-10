@@ -192,13 +192,13 @@ export const useValidatorFilters = () => {
     const filteredList: AnyFilter = []
     for (const validator of list) {
       const identity = validatorIdentities[validator.address]
-      const identityRaw = identity ? identity?.[0]?.info?.display?.Raw : ''
+      const identityRaw = identity ? identity?.[0]?.info?.display?.value : ''
 
       const identitySearch = (identityRaw || '').toLowerCase()
 
       const superIdentity = validatorSupers[validator.address] ?? null
       const superIdentityRaw =
-        superIdentity?.superOf?.identity?.[0]?.info?.display?.Raw ?? ''
+        superIdentity?.identity?.[0]?.info?.display?.value ?? ''
 
       const superIdentitySearch = (superIdentityRaw || '').toLowerCase()
 
