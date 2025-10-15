@@ -251,18 +251,6 @@ export const Accounts = () => {
               const total = stakingLedger?.ledger?.total || 0n
               const availableAmount = transferOptions.freeBalance - total
 
-              console.log(
-                '🔍 [Accounts] Balance calculation for address:',
-                address,
-                {
-                  freeBalance: transferOptions.freeBalance.toString(),
-                  total: total.toString(),
-                  availableAmount: availableAmount.toString(),
-                  transferrableBalance:
-                    transferOptions.transferrableBalance.toString(),
-                }
-              )
-
               return (
                 <Fragment key={`acc_not_staking_${i}`}>
                   <AccountButton

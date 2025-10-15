@@ -99,11 +99,11 @@ export const useValidatorFilters = () => {
     in_session: filterInSession,
   }
 
-  const getFiltersToApply = (excludes: string[]) => {
+  const getFiltersToApply = (filters: string[]) => {
     const fns = []
-    for (const exclude of excludes) {
-      if (filterToFunction[exclude]) {
-        fns.push(filterToFunction[exclude])
+    for (const filter of filters) {
+      if (filterToFunction[filter]) {
+        fns.push(filterToFunction[filter])
       }
     }
     return fns
@@ -114,20 +114,24 @@ export const useValidatorFilters = () => {
     excludes: string[] | null,
     list: AnyJson
   ) => {
-    if (!excludes && !includes) {
+    if (
+      (!excludes || excludes.length === 0) &&
+      (!includes || includes.length === 0)
+    ) {
       return list
     }
-    if (includes) {
+    let filteredList = [...list]
+    if (includes && includes.length > 0) {
       for (const fn of getFiltersToApply(includes)) {
-        list = fn(list)
+        filteredList = fn(filteredList)
       }
     }
-    if (excludes) {
+    if (excludes && excludes.length > 0) {
       for (const fn of getFiltersToApply(excludes)) {
-        list = fn(list)
+        filteredList = fn(filteredList)
       }
     }
-    return list
+    return filteredList
   }
 
   /*

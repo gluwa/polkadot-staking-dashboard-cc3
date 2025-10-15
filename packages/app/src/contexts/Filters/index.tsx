@@ -66,9 +66,9 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
         let { filters } = e
 
         if (filters.includes(f)) {
-          filters.splice(filters.indexOf(f), 1)
+          filters = filters.filter((filter) => filter !== f)
         } else {
-          filters = filters.concat(f)
+          filters = [...filters, f]
         }
         return {
           key: e.key,
@@ -106,7 +106,7 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
         }
 
         let { filters } = e
-        filters = filters.filter((f: string) => !fs.includes(f)).concat(fs)
+        filters = [...filters.filter((f: string) => !fs.includes(f)), ...fs]
         return {
           key: e.key,
           filters,

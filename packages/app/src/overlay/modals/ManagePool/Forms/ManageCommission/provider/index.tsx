@@ -40,14 +40,23 @@ export const PoolCommissionProvider = ({
   const initialMaxCommission = (() => {
     const maxCommissionValue = bondedPool?.commission?.max
     if (maxCommissionValue !== undefined) {
-      // Handle string values (e.g., "100%" -> "100")
+      // Handle string values
       if (typeof maxCommissionValue === 'string') {
-        return Number((maxCommissionValue as string).slice(0, -1))
+        const stringValue = maxCommissionValue as string
+        // If it ends with %, remove the % and convert to perbill
+        if (stringValue.endsWith('%')) {
+          return Number(stringValue.slice(0, -1)) * PerbillMultiplier
+        }
+        // If it's a string without %, it's already a perbill value
+        return Number(stringValue)
       }
-      // Handle numeric values
+      // Handle numeric values - use as-is (already in perbill format)
       return Number(maxCommissionValue)
     }
-    return globalMaxCommission
+    // If no max commission is set, use a reasonable default (100% in perbill format)
+    return (
+      (globalMaxCommission > 0 ? globalMaxCommission : 100) * PerbillMultiplier
+    )
   })()
 
   // Get initial change rate value from the bonded pool commission config.

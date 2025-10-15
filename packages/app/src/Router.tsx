@@ -27,15 +27,13 @@ import {
   Route,
   Routes,
   useLocation,
-  useNavigate,
 } from 'react-router-dom'
 import { Page } from 'ui-core/base'
 
 const RouterInner = () => {
-  const navigate = useNavigate()
   const { network } = useNetwork()
   const { pathname } = useLocation()
-  const { setContainerRefs, advancedMode } = useUi()
+  const { setContainerRefs } = useUi()
 
   // References to outer container
   const mainInterfaceRef = useRef<HTMLDivElement>(null)
@@ -55,10 +53,8 @@ const RouterInner = () => {
   // Support active account from url
   useAccountFromUrl()
 
-  // Jump back to overview page on advanced mode change
-  useEffect(() => {
-    navigate(`/overview`)
-  }, [advancedMode])
+  // Note: Removed automatic redirect to overview on advanced mode change
+  // This was causing unwanted redirects on page refresh and mode changes
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallbackApp}>
