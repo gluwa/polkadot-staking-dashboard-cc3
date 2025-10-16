@@ -3,7 +3,7 @@
 
 import { getDurationFromNow } from '@w3ux/hooks/util'
 import type { TimeLeftFormatted, TimeLeftRaw } from '@w3ux/types'
-import { planckToUnit, rmCommas } from '@w3ux/utils'
+import { rmCommas } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
 import { fromUnixTime } from 'date-fns'
 import { bnToU8a, concatU8a, encodeAddress, stringToU8a } from 'dedot/utils'
@@ -11,10 +11,19 @@ import type { TFunction } from 'i18next'
 import type { IdentityOf } from 'types'
 
 // Return `planckToUnit` as a BigNumber
-export const planckToUnitBn = (val: BigNumber, units: number): BigNumber =>
-  new BigNumber(
-    planckToUnit(val.decimalPlaces(0).toFormat({ groupSeparator: '' }), units)
-  )
+export const planckToUnitBn = (val: BigNumber, units: number): BigNumber => {
+  // Validate inputs to prevent NaN
+  if (!val || val.isNaN() || !units || units <= 0) {
+    return new BigNumber(0)
+  }
+
+  // Use direct BigNumber division instead of planckToUnit for better precision
+  const divisor = new BigNumber(10).pow(units)
+  const result = val.dividedBy(divisor)
+
+  // Return 0 if calculation resulted in NaN
+  return result.isNaN() ? new BigNumber(0) : result
+}
 
 // Converts a string to a BigNumber.
 export const stringToBn = (value: string): BigNumber =>

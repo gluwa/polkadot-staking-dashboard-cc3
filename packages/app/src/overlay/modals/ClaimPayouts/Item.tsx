@@ -43,13 +43,14 @@ export const Item = ({
             <ButtonSubmit
               text={t('claim')}
               onClick={() => {
+                const paginatedValidators = Object.entries(unclaimedPayout).map(
+                  ([v, [page]]) => [page, v] as [string, string]
+                )
                 setPayouts([
                   {
                     era,
                     payout: totalPayout.toString(),
-                    paginatedValidators: Object.entries(unclaimedPayout).map(
-                      ([v, [page]]) => [page, v]
-                    ),
+                    paginatedValidators,
                   },
                 ])
                 setSection(1)

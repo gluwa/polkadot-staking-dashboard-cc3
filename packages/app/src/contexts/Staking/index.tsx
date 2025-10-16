@@ -193,33 +193,31 @@ export const StakingProvider = ({ children }: { children: ReactNode }) => {
     )
 
     const result: Exposure[] = []
-    let i = 0
     for (const pages of pagedResults) {
-      // NOTE: Only one page is fetched for each validator for now
-      const page = pages[0]
+      // Process all pages for each validator, not just the first one
+      for (const page of pages) {
+        // NOTE: Some pages turn up as undefined - might be worth exploring further
+        if (!page) {
+          continue
+        }
 
-      // NOTE: Some pages turn up as undefined - might be worth exploring further
-      if (!page) {
-        continue
+        const [keyArgs, { others }] = page
+        const [eraFromKey, validator, pageNumber] = keyArgs
+
+        const { own, total } = validators[validator]
+
+        result.push({
+          keys: [eraFromKey.toString(), validator, pageNumber.toString()],
+          val: {
+            total: total.toString(),
+            own: own.toString(),
+            others: others.map(({ who, value }) => ({
+              who,
+              value: value.toString(),
+            })),
+          },
+        })
       }
-
-      const [keyArgs, { others }] = page
-
-      const validator = validatorKeys[i]
-      const { own, total } = validators[validator]
-
-      result.push({
-        keys: [keyArgs[0].toString(), validator],
-        val: {
-          total: total.toString(),
-          own: own.toString(),
-          others: others.map(({ who, value }) => ({
-            who,
-            value: value.toString(),
-          })),
-        },
-      })
-      i++
     }
     return result
   }
