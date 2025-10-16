@@ -27,10 +27,11 @@ export const UnclaimedPayoutsStatus = ({ dimmed }: { dimmed: boolean }) => {
 
   const totalUnclaimed = Object.values(unclaimedPayouts || {}).reduce(
     (total, validators) => {
-      const eraTotal = Object.values(validators).reduce(
-        (amount, value) => amount.plus(value),
-        new BigNumber(0)
-      )
+      const eraTotal = Object.values(validators).reduce((amount, value) => {
+        // Handle both old format (string) and new format ([page, amount] tuple)
+        const payoutAmount = Array.isArray(value) ? value[1] : value
+        return amount.plus(new BigNumber(payoutAmount || '0'))
+      }, new BigNumber(0))
       return eraTotal.plus(total)
     },
     new BigNumber(0)

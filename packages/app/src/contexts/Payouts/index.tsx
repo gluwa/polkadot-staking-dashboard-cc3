@@ -373,7 +373,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
           .multipliedBy(validatorRewardPoints)
           .dividedBy(totalRewardPoints)
 
-        const valCut = commission.multipliedBy(avail)
+        const valCut = commission.dividedBy(10000000).multipliedBy(avail)
 
         const unclaimedPayout = total.isZero()
           ? new BigNumber(0)
@@ -384,9 +384,10 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
               .plus(isValidator ? valCut : 0)
 
         if (!unclaimedPayout.isZero()) {
+          const exposedPage = localExposed?.exposedPage || 0
           unclaimed[era] = {
             ...unclaimed[era],
-            [validator]: unclaimedPayout.toString(),
+            [validator]: [exposedPage.toString(), unclaimedPayout.toString()],
           }
           j++
         }

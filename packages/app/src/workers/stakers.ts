@@ -34,15 +34,7 @@ ctx.addEventListener('message', (event: AnyJson) => {
 
 // Process era exposures and return if an account was exposed, along with the validator they backed.
 const processEraForExposure = (data: ProcessEraForExposureArgs) => {
-  const {
-    era,
-    maxExposurePageSize,
-    exposures,
-    exitOnExposed,
-    task,
-    networkName,
-    who,
-  } = data
+  const { era, exposures, exitOnExposed, task, networkName, who } = data
   let exposed = false
 
   // If exposed, the validator that was backed.
@@ -79,8 +71,10 @@ const processEraForExposure = (data: ProcessEraForExposureArgs) => {
     const inOthers = others.find((o) => o.who === who?.address)
 
     if (inOthers) {
-      const index = others.findIndex((o) => o.who === who?.address)
-      const exposedPage = Math.floor(index / Number(maxExposurePageSize))
+      // Use the actual page number from the exposure data instead of calculating it
+      // The keys array contains [era, validator, pageNumber]
+      const pageNumber = keys[2] || 0
+      const exposedPage = Number(pageNumber)
 
       const share =
         new BigNumber(inOthers.value).isZero() || total === '0'

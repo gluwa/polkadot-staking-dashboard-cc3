@@ -24,6 +24,7 @@ export const MaxCommission = ({
   const maxCommissionUpdated = isUpdated('max_commission')
 
   const commissionUnit = commission / PerbillMultiplier
+  const maxCommissionUnit = maxCommission / PerbillMultiplier
 
   // Determine the max commission feedback to display.
   const maxCommissionFeedback = (() => {
@@ -52,20 +53,23 @@ export const MaxCommission = ({
     getEnabled('max_commission') && (
       <SliderWrapper>
         <div>
-          <h2>{maxCommission}% </h2>
+          <h2>{maxCommissionUnit}% </h2>
           <h5 className={maxCommissionFeedback?.label || 'neutral'}>
             {!!maxCommissionFeedback && maxCommissionFeedback.text}
           </h5>
         </div>
 
         <StyledSlider
-          value={maxCommission}
+          value={maxCommissionUnit}
+          min={0}
+          max={100}
           step={0.1}
           onChange={(val) => {
             if (typeof val === 'number') {
-              setMaxCommission(val)
+              const perbillValue = val * PerbillMultiplier
+              setMaxCommission(perbillValue)
               if (val < commissionUnit) {
-                setCommission(val)
+                setCommission(val * PerbillMultiplier)
               }
             }
           }}

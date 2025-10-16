@@ -58,7 +58,6 @@ export const ManageCommission = ({
   const { getBondedPool, updateBondedPools } = useBondedPools()
 
   const poolId = activePool?.id || 0
-  const bondedPool = getBondedPool(poolId)
 
   // Get currently set commission values.
   const commission = getCurrent('commission')
@@ -130,17 +129,15 @@ export const ManageCommission = ({
     }
     const txs: (SubmittableExtrinsic | undefined)[] = []
     if (commissionUpdated) {
-      const commissionPerbill = commission * PerbillMultiplier
       txs.push(
         serviceApi.tx.poolSetCommission(
           poolId,
-          currentCommissionSet ? [commissionPerbill, payee] : undefined
+          currentCommissionSet ? [commission, payee] : undefined
         )
       )
     }
     if (isUpdated('max_commission') && getEnabled('max_commission')) {
-      const maxPerbill = maxCommission * PerbillMultiplier
-      txs.push(serviceApi.tx.poolSetCommissionMax(poolId, maxPerbill))
+      txs.push(serviceApi.tx.poolSetCommissionMax(poolId, maxCommission))
     }
     if (isUpdated('change_rate') && getEnabled('change_rate')) {
       const maxIncreasePerbill = changeRate.maxIncrease * PerbillMultiplier
@@ -163,7 +160,7 @@ export const ManageCommission = ({
   }
 
   const submitExtrinsic = useSubmitExtrinsic({
-    tx: getTx(),
+    tx: valid ? getTx() : undefined,
     from: activeAddress,
     shouldSubmit: true,
     callbackSubmit: () => {
@@ -177,11 +174,9 @@ export const ManageCommission = ({
             ...pool,
             commission: {
               ...pool.commission,
-              current: currentCommissionSet
-                ? [commission * PerbillMultiplier, payee]
-                : undefined,
+              current: currentCommissionSet ? [commission, payee] : undefined,
               max: isUpdated('max_commission')
-                ? maxCommission * PerbillMultiplier
+                ? maxCommission
                 : pool.commission?.max || undefined,
               changeRate: isUpdated('change_rate')
                 ? {
@@ -241,7 +236,6 @@ export const ManageCommission = ({
     commissionAboveGlobal,
     maxCommissionAboveGlobal,
     invalidChangeRate,
-    bondedPool,
     noChange,
     txsToSubmit,
   ])

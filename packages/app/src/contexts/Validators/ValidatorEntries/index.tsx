@@ -501,11 +501,10 @@ export const ValidatorsProvider = ({ children }: { children: ReactNode }) => {
   ): ValidatorListEntry[] => {
     const injected: ValidatorListEntry[] =
       entries.map((entry) => {
-        const inEra =
-          stakers.find(({ address }) => address === entry.address) || false
+        const inSession = sessionValidators.includes(entry.address)
 
         let validatorStatus: ValidatorStatus = 'waiting'
-        if (inEra) {
+        if (inSession) {
           validatorStatus = 'active'
         }
         return {

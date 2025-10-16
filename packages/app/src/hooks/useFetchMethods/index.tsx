@@ -132,25 +132,24 @@ export const useFetchMethods = () => {
     return shuffle(waiting.concat(active))
   }
 
-  const available = (nominations: Validator[]) => {
+  const available = (nominations: Validator[], includeAll = false) => {
     const all = Object.assign(getValidators())
 
+    // Define filters - exclude missing_identity only if not including all
+    const excludeFilters = includeAll
+      ? ['all_commission', 'blocked_nominations']
+      : ['all_commission', 'blocked_nominations', 'missing_identity']
+
     const parachainActive =
-      applyFilter(
-        ['active'],
-        ['all_commission', 'blocked_nominations', 'missing_identity'],
-        all
-      ).filter(
-        (n: Validator) => !nominations.find((o) => o.address === n.address)
+      applyFilter(['active'], excludeFilters, all).filter(
+        (n: Validator) =>
+          includeAll || !nominations.find((o) => o.address === n.address)
       ) || []
 
     const active =
-      applyFilter(
-        ['active'],
-        ['all_commission', 'blocked_nominations', 'missing_identity'],
-        all
-      ).filter(
-        (n: Validator) => !nominations.find((o) => o.address === n.address)
+      applyFilter(['active'], excludeFilters, all).filter(
+        (n: Validator) =>
+          includeAll || !nominations.find((o) => o.address === n.address)
       ) || []
 
     const highPerformance = active.filter((a: Validator) => {
@@ -159,12 +158,9 @@ export const useFetchMethods = () => {
     })
 
     const random =
-      applyFilter(
-        null,
-        ['all_commission', 'blocked_nominations', 'missing_identity'],
-        all
-      ).filter(
-        (n: Validator) => !nominations.find((o) => o.address === n.address)
+      applyFilter(null, excludeFilters, all).filter(
+        (n: Validator) =>
+          includeAll || !nominations.find((o) => o.address === n.address)
       ) || []
 
     return {
@@ -176,10 +172,13 @@ export const useFetchMethods = () => {
   }
 
   const addActiveValidator = (nominations: Validator[]) => {
-    const all: Validator[] = available(nominations).activeValidators
+    const all: Validator[] = available(nominations, true).activeValidators
 
-    // take one validator
-    const validator = shuffle(all).slice(0, 1)[0] || null
+    // take one validator that's not already nominated
+    const availableValidators = all.filter(
+      (v) => !nominations.find((n) => n.address === v.address)
+    )
+    const validator = shuffle(availableValidators).slice(0, 1)[0] || null
     if (validator) {
       nominations.push(validator)
     }
@@ -187,10 +186,13 @@ export const useFetchMethods = () => {
   }
 
   const addHighPerformanceValidator = (nominations: Validator[]) => {
-    const all: Validator[] = available(nominations).highPerformance
+    const all: Validator[] = available(nominations, true).highPerformance
 
-    // take one validator
-    const validator = shuffle(all).slice(0, 1)[0] || null
+    // take one validator that's not already nominated
+    const availableValidators = all.filter(
+      (v) => !nominations.find((n) => n.address === v.address)
+    )
+    const validator = shuffle(availableValidators).slice(0, 1)[0] || null
     if (validator) {
       nominations.push(validator)
     }
@@ -198,10 +200,13 @@ export const useFetchMethods = () => {
   }
 
   const addRandomValidator = (nominations: Validator[]) => {
-    const all: Validator[] = available(nominations).randomValidators
+    const all: Validator[] = available(nominations, true).randomValidators
 
-    // take one validator
-    const validator = shuffle(all).slice(0, 1)[0] || null
+    // take one validator that's not already nominated
+    const availableValidators = all.filter(
+      (v) => !nominations.find((n) => n.address === v.address)
+    )
+    const validator = shuffle(availableValidators).slice(0, 1)[0] || null
     if (validator) {
       nominations.push(validator)
     }

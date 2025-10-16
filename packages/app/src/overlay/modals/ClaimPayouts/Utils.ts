@@ -8,6 +8,11 @@ export const getTotalPayout = (
   unclaimedPayout: EraUnclaimedPayouts
 ): BigNumber =>
   Object.values(unclaimedPayout).reduce(
-    (acc: BigNumber, cur: string) => acc.plus(cur),
+    (acc: BigNumber, cur: [string, string]) => {
+      // Extract the amount (second element of the tuple)
+      const amount = cur[1] || '0'
+      const payoutValue = new BigNumber(amount)
+      return acc.plus(payoutValue.isNaN() ? 0 : payoutValue)
+    },
     new BigNumber(0)
   )
