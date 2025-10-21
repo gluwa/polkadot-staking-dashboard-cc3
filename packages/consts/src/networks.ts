@@ -14,6 +14,10 @@ export const NetworkList: Networks = {
       rpc: {
         'CC3-Devnet': 'wss://rpc.cc3-devnet.creditcoin.network/ws',
       },
+      subscan: {
+        api: 'https://creditcoin3-dev.api.subscan.io',
+        explorer: 'https://creditcoin3-dev.subscan.io',
+      },
     },
     unit: 'CTC',
     units: 18,
@@ -25,6 +29,23 @@ export const NetworkList: Networks = {
     endpoints: {
       rpc: {
         'CC3-Testnet': 'wss://rpc.cc3-testnet.creditcoin.network/ws',
+      },
+      subscan: {
+        api: 'https://creditcoin3-testnet.api.subscan.io',
+        explorer: 'https://creditcoin3-testnet.subscan.io',
+      },
+    },
+    unit: 'CTC',
+    units: 18,
+    ss58: 42,
+    defaultFeeReserve: 100000000000000000n,
+  },
+  'creditcoin3-dryrun': {
+    name: 'creditcoin3-dryrun',
+    endpoints: {
+      rpc: {
+        'creditcoin3-dryrun':
+          'wss://rpc.cc3-devnet-dryrun.creditcoin.network/ws',
       },
     },
     unit: 'CTC',
