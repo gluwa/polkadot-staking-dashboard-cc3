@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
+import { NetworkList } from 'consts/networks'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useNetwork } from 'contexts/Network'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +15,14 @@ export const BalanceLinks = () => {
   const { network } = useNetwork()
   const { activeAddress } = useActiveAccounts()
 
+  const getSubscanUrl = () => {
+    const networkConfig = NetworkList[network]
+    const baseUrl =
+      networkConfig?.endpoints?.subscan?.explorer ||
+      `https://${network}.subscan.io`
+    return `${baseUrl}/account/${activeAddress}`
+  }
+
   return (
     <MoreWrapper>
       <Separator />
@@ -21,12 +30,7 @@ export const BalanceLinks = () => {
       <section>
         <ButtonPrimaryInvert
           lg
-          onClick={() =>
-            window.open(
-              `https://${network}.subscan.io/account/${activeAddress}`,
-              '_blank'
-            )
-          }
+          onClick={() => window.open(getSubscanUrl(), '_blank')}
           iconRight={faExternalLinkAlt}
           iconTransform="shrink-2"
           text="Subscan"

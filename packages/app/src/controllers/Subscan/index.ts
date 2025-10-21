@@ -1,6 +1,7 @@
 // Copyright 2024 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
+import { NetworkList } from 'consts/networks'
 import type { Locale } from 'date-fns'
 import { format, fromUnixTime, getUnixTime, subDays } from 'date-fns'
 import { poolMembersPerPage } from 'library/List/defaults'
@@ -339,9 +340,21 @@ export class Subscan {
   }
 
   // Get the public Subscan endpoint.
-  static getEndpoint = () => `https://${this.network}.api.subscan.io`
+  static getEndpoint = () => {
+    const networkConfig = NetworkList[this.network as keyof typeof NetworkList]
+    return (
+      networkConfig?.endpoints?.subscan?.api ||
+      `https://${this.network}.api.subscan.io`
+    )
+  }
 
-  static getExplorerUrl = () => `https://${this.network}.subscan.io`
+  static getExplorerUrl = () => {
+    const networkConfig = NetworkList[this.network as keyof typeof NetworkList]
+    return (
+      networkConfig?.endpoints?.subscan?.explorer ||
+      `https://${this.network}.subscan.io`
+    )
+  }
 
   // Process the request queue with rate limiting
   private static async processQueue() {
