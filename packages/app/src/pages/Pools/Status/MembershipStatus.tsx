@@ -8,7 +8,6 @@ import { useImportedAccounts } from 'contexts/Connect/ImportedAccounts'
 import { useActivePool } from 'contexts/Pools/ActivePool'
 import { useBondedPools } from 'contexts/Pools/BondedPools'
 import { determinePoolDisplay } from 'contexts/Pools/util'
-import { useStaking } from 'contexts/Staking'
 import { useTransferOptions } from 'contexts/TransferOptions'
 import { Stat } from 'library/Stat'
 import { useTranslation } from 'react-i18next'
@@ -22,7 +21,6 @@ export const MembershipStatus = ({
 }: MembershipStatusProps) => {
   const { t } = useTranslation('pages')
   const { isReady } = useApi()
-  const { inSetup } = useStaking()
   const { label } = useStatusButtons()
   const { openModal } = useOverlay().modal
   const { poolsMetaData } = useBondedPools()
@@ -83,7 +81,7 @@ export const MembershipStatus = ({
     <Stat
       label={t('poolMembership')}
       helpKey="Pool Membership"
-      stat={!inSetup() ? t('alreadyNominating') : t('notInPool')}
+      stat={t('notInPool')}
       buttonType={buttonType}
     />
   )
