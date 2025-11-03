@@ -3,7 +3,6 @@
 
 import { faBars, faGripVertical } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { ellipsisFn } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
 import type { AnyApi } from 'common-types'
 import { ListItemsPerBatch, ListItemsPerPage } from 'consts'
@@ -13,7 +12,6 @@ import { useNetwork } from 'contexts/Network'
 import { useBondedPools } from 'contexts/Pools/BondedPools'
 import { StakingContext } from 'contexts/Staking'
 import { useThemeValues } from 'contexts/ThemeValues'
-import { useValidators } from 'contexts/Validators/ValidatorEntries'
 import { formatDistance, fromUnixTime } from 'date-fns'
 import { motion } from 'framer-motion'
 import { Header, List, Wrapper as ListWrapper } from 'library/List'
@@ -41,7 +39,6 @@ export const PayoutListInner = ({
   const { unit, units } = getNetworkData(network)
   const { isReady, activeEra } = useApi()
   const { listFormat, setListFormat } = usePayoutList()
-  const { getValidators } = useValidators()
   const { bondedPools } = useBondedPools()
   const { getThemeValue } = useThemeValues()
 
@@ -160,19 +157,8 @@ export const PayoutListInner = ({
                   ? 'reward'
                   : undefined
 
-            // get validator if it exists
-            const validator = getValidators().find(
-              (v) => v.address === p.validator_stash
-            )
-
             // get pool if it exists
             const pool = bondedPools.find(({ id }) => id === p.pool_id)
-
-            const batchIndex = validator
-              ? getValidators().indexOf(validator)
-              : pool
-                ? bondedPools.indexOf(pool)
-                : 0
 
             return (
               <motion.div
@@ -215,14 +201,7 @@ export const PayoutListInner = ({
                         <div>
                           {label === t('payout') && (
                             <div>
-                              {batchIndex > 0 ? (
-                                <Identity address={p.validator_stash} />
-                              ) : (
-                                <div>
-                                  {ellipsisFn(p.validator_stash)}
-                                  {p.validator_stash}
-                                </div>
-                              )}
+                              <Identity address={p.validator_stash} />
                             </div>
                           )}
                           {label === t('poolClaim') && (

@@ -125,17 +125,18 @@ export const ValidatorListInner = ({
 
   // handle filter / order update
   const handleValidatorsFilterUpdate = (
-    filteredValidators = Object.assign(validatorsDefault)
+    filteredValidators?: ValidatorListEntry[]
   ) => {
-    if (allowFilters) {
+    if (allowFilters && validatorsDefault.length > 0) {
+      let workingList = filteredValidators || [...validatorsDefault]
       if (order !== 'default') {
-        filteredValidators = applyOrder(order, filteredValidators)
+        workingList = applyOrder(order, workingList)
       }
-      filteredValidators = applyFilter(includes, excludes, filteredValidators)
+      workingList = applyFilter(includes, excludes, workingList)
       if (searchTerm) {
-        filteredValidators = applySearch(filteredValidators, searchTerm)
+        workingList = applySearch(workingList, searchTerm)
       }
-      setValidators(filteredValidators)
+      setValidators(workingList)
       setPage(1)
     }
   }
@@ -153,7 +154,11 @@ export const ValidatorListInner = ({
   const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
     const newValue = e.currentTarget.value
 
-    let filteredValidators = Object.assign(validatorsDefault)
+    if (validatorsDefault.length === 0) {
+      return
+    }
+
+    let filteredValidators = [...validatorsDefault]
     if (order !== 'default') {
       filteredValidators = applyOrder(order, filteredValidators)
     }
@@ -235,10 +240,10 @@ export const ValidatorListInner = ({
 
   // List ui changes / validator changes trigger re-render of list
   useEffect(() => {
-    if (allowFilters && fetched) {
+    if (allowFilters && fetched && bootstrapped) {
       handleValidatorsFilterUpdate()
     }
-  }, [order, includes, excludes])
+  }, [order, includes, excludes, fetched, bootstrapped])
 
   // Handle modal resize on list format change
   useEffect(() => {

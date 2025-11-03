@@ -75,6 +75,8 @@ export const CommissionCurrent = ({
 
         <StyledSlider
           value={commissionUnit}
+          min={0}
+          max={100}
           step={0.1}
           onChange={(val) => {
             if (typeof val === 'number') {
@@ -82,12 +84,7 @@ export const CommissionCurrent = ({
 
               setCommission(val * PerbillMultiplier)
               if (val > maxCommission && getEnabled('max_commission')) {
-                setMaxCommission(
-                  Math.min(
-                    getInitial('max_commission') * PerbillMultiplier,
-                    val
-                  )
-                )
+                setMaxCommission(Math.min(getInitial('max_commission'), val))
               }
             }
           }}

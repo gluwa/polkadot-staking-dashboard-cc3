@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import { PerbillMultiplier } from 'consts'
+import { useApi } from 'contexts/Api'
 import { useActivePool } from 'contexts/Pools/ActivePool'
 import { useBondedPools } from 'contexts/Pools/BondedPools'
 import { createContext, useContext, useEffect, useState } from 'react'
@@ -27,6 +28,7 @@ export const PoolCommissionProvider = ({
   const { getBondedPool } = useBondedPools()
   const poolId = activePool?.id || 0
   const bondedPool = getBondedPool(poolId)
+  const { globalMaxCommission } = useApi().poolsConfig
 
   // Get initial commission value from the bonded pool commission config.
   const initialCommission = bondedPool?.commission?.current?.[0] || 0
@@ -35,9 +37,27 @@ export const PoolCommissionProvider = ({
   const initialPayee = bondedPool?.commission?.current?.[1] || null
 
   // Get initial maximum commission value from the bonded pool commission config.
-  const initialMaxCommission = Number(
-    (bondedPool?.commission?.max || '100').toString()
-  )
+  const initialMaxCommission = (() => {
+    const maxCommissionValue = bondedPool?.commission?.max
+    if (maxCommissionValue !== undefined) {
+      // Handle string values
+      if (typeof maxCommissionValue === 'string') {
+        const stringValue = maxCommissionValue as string
+        // If it ends with %, remove the % and convert to perbill
+        if (stringValue.endsWith('%')) {
+          return Number(stringValue.slice(0, -1)) * PerbillMultiplier
+        }
+        // If it's a string without %, it's already a perbill value
+        return Number(stringValue)
+      }
+      // Handle numeric values - use as-is (already in perbill format)
+      return Number(maxCommissionValue)
+    }
+    // If no max commission is set, use a reasonable default (100% in perbill format)
+    return (
+      (globalMaxCommission > 0 ? globalMaxCommission : 100) * PerbillMultiplier
+    )
+  })()
 
   // Get initial change rate value from the bonded pool commission config.
   const initialChangeRate = ((): ChangeRateInput => {

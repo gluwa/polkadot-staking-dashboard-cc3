@@ -20,7 +20,7 @@ export const Wrapper = styled(motion.button)<MinimisedProps>`
   .name {
     color: var(--text-color-secondary);
     font-family: InterSemiBold, sans-serif;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
   }
   .light {
     color: var(--text-color-primary);
@@ -79,13 +79,15 @@ export const MinimisedWrapper = styled(motion.button)`
 `
 
 export const IconWrapper = styled.div<{ $minimised: boolean }>`
-  height: 2rem;
+  height: 1.8rem;
   display: flex;
   align-items: center;
   margin-left: ${(props) => (props.$minimised ? 0 : '0.25rem')};
-  margin-right: ${(props) => (props.$minimised ? 0 : '0.65rem')};
+  margin-right: ${(props) => (props.$minimised ? 0 : '0.5rem')};
 
   svg {
+    width: 1.2rem;
+    height: 1.2rem;
     .primary {
       fill: var(--text-color-primary);
     }

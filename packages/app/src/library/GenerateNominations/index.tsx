@@ -143,7 +143,7 @@ export const GenerateNominations = ({
       icon: faPlus,
       isDisabled: () =>
         maxNominationsReached ||
-        !availableToNominate(nominations).highPerformance.length,
+        !availableToNominate(nominations, true).highPerformance.length,
     },
     getActive: {
       title: t('activeValidator', { ns: 'app' }),
@@ -152,7 +152,7 @@ export const GenerateNominations = ({
       icon: faPlus,
       isDisabled: () =>
         maxNominationsReached ||
-        !availableToNominate(nominations).activeValidators.length,
+        !availableToNominate(nominations, true).activeValidators.length,
     },
     getRandom: {
       title: t('randomValidator', { ns: 'app' }),
@@ -161,7 +161,7 @@ export const GenerateNominations = ({
       icon: faPlus,
       isDisabled: () =>
         maxNominationsReached ||
-        !availableToNominate(nominations).randomValidators.length,
+        !availableToNominate(nominations, true).randomValidators.length,
     },
     // TODO: Enable feature in future PR
     // searchValidators: {

@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 import type { Sync } from '@w3ux/types'
-import { rmCommas, setStateWithRef } from '@w3ux/utils'
+import { setStateWithRef } from '@w3ux/utils'
 import BigNumber from 'bignumber.js'
 import type { AnyApi } from 'common-types'
 import { useActiveAccounts } from 'contexts/ActiveAccounts'
 import { useApi } from 'contexts/Api'
 import { useNetwork } from 'contexts/Network'
 import { useStaking } from 'contexts/Staking'
+import type { PalletStakingStakingLedger } from 'dedot/chaintypes'
 import type { ReactNode } from 'react'
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { AnyJson } from 'types'
@@ -207,28 +208,98 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
       Object.values(validatorControllers)
     )
     const unclaimedRewards: Record<string, string[]> = {}
+    // First, collect all the multicall parameters for claimedRewards
+    const claimedRewardsCalls: Array<[string, string]> = [] // [era, controller]
+    const ledgerMap: Record<string, PalletStakingStakingLedger> = {}
+
+    // Create mapping from stash address back to original validator address
+    const stashToValidatorMap: Record<string, string> = {}
+
     for (const ledgerResult of ledgerResults) {
       const ledger = ledgerResult
       if (ledger) {
-        const rewards = ledger.legacyClaimedRewards
+        const stash = ledger.stash
 
-        // get claimed eras within `erasToCheck`.
-        const erasClaimed = rewards
-          .map((e) => rmCommas(e.toString()))
-          .filter(
-            (e: string) =>
-              new BigNumber(e).isLessThanOrEqualTo(startEra) &&
-              new BigNumber(e).isGreaterThanOrEqualTo(endEra)
+        if (stash) {
+          const stashAddress = stash.raw.toString()
+          ledgerMap[stashAddress] = ledger
+
+          // Find the original validator address by matching the stash address
+          // The stash address should match one of our validator addresses
+          const originalValidatorAddress = uniqueValidators.find(
+            (validator) =>
+              // Convert validator address to hex format to match stash address
+              validator === stashAddress || validator === stash.address()
           )
 
-        // filter eras yet to be claimed
-        unclaimedRewards[ledger.stash.address()] = erasToCheck
-          .map((e) => e.toString())
-          .filter((r: string) =>
-            validatorExposedEras(ledger.stash.address()).includes(r)
-          )
-          .filter((r: string) => !erasClaimed.includes(r))
+          if (originalValidatorAddress) {
+            stashToValidatorMap[stashAddress] = originalValidatorAddress
+
+            // Get eras to check for this validator using the original validator address
+            const erasToCheckForValidator = erasToCheck
+              .map((e) => e.toString())
+              .filter((r: string) =>
+                validatorExposedEras(originalValidatorAddress).includes(r)
+              )
+
+            // Add to multicall parameters
+            erasToCheckForValidator.forEach((era) => {
+              claimedRewardsCalls.push([era, stashAddress])
+            })
+          }
+        }
       }
+    }
+
+    // Execute multicall for claimedRewards
+    const claimedRewardsResults = await serviceApi.query.claimedRewardsMulti(
+      claimedRewardsCalls.map(([era, controller]) => [era, controller])
+    )
+
+    // Process results for each validator
+    let callIndex = 0
+    for (const [stash, ledger] of Object.entries(ledgerMap)) {
+      const originalValidatorAddress = stashToValidatorMap[stash]
+      const legacyRewards = ledger.legacyClaimedRewards || []
+      const legacyErasClaimed = legacyRewards
+        .map((e: number) => e.toString())
+        .filter(
+          (e: string) =>
+            new BigNumber(e).isLessThanOrEqualTo(startEra) &&
+            new BigNumber(e).isGreaterThanOrEqualTo(endEra)
+        )
+
+      // Get eras to check for this validator using the original validator address
+      const erasToCheckForValidator = erasToCheck
+        .map((e) => e.toString())
+        .filter((r: string) =>
+          validatorExposedEras(originalValidatorAddress).includes(r)
+        )
+
+      // Get results for this validator's eras
+      const validatorResults = claimedRewardsResults.slice(
+        callIndex,
+        callIndex + erasToCheckForValidator.length
+      )
+      callIndex += erasToCheckForValidator.length
+
+      // Filter out eras that were claimed after upgrade
+      const postUpgradeClaimedEras = erasToCheckForValidator.filter(
+        (era, index) => {
+          const result = validatorResults[index]
+          // If result is not null/empty, it means the era was claimed after upgrade
+          return result && result.length > 0
+        }
+      )
+
+      // Combine legacy claimed eras with post-upgrade claimed eras
+      const allClaimedEras = [...legacyErasClaimed, ...postUpgradeClaimedEras]
+
+      // Filter eras yet to be claimed
+      const unclaimedEras = erasToCheckForValidator.filter(
+        (r: string) => !allClaimedEras.includes(r)
+      )
+      unclaimedRewards[originalValidatorAddress] = unclaimedEras
     }
 
     // Reformat unclaimed rewards to be { era: validators[] }.
@@ -302,7 +373,7 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
           .multipliedBy(validatorRewardPoints)
           .dividedBy(totalRewardPoints)
 
-        const valCut = commission.multipliedBy(avail)
+        const valCut = commission.dividedBy(10000000).multipliedBy(avail)
 
         const unclaimedPayout = total.isZero()
           ? new BigNumber(0)
@@ -313,9 +384,10 @@ export const PayoutsProvider = ({ children }: { children: ReactNode }) => {
               .plus(isValidator ? valCut : 0)
 
         if (!unclaimedPayout.isZero()) {
+          const exposedPage = localExposed?.exposedPage || 0
           unclaimed[era] = {
             ...unclaimed[era],
-            [validator]: unclaimedPayout.toString(),
+            [validator]: [exposedPage.toString(), unclaimedPayout.toString()],
           }
           j++
         }

@@ -66,8 +66,8 @@ export const Forms = forwardRef(
             paginatedValidators.forEach(([page, v]) => {
               const tx = serviceApi.tx.payoutStakersByPage(
                 v,
-                Number(era),
-                Number(page)
+                Number(era.replace(/,/g, '')),
+                Number(page) // Use the actual page number from blockchain data
               )
               if (tx) {
                 acc.push(tx)

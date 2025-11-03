@@ -3,7 +3,6 @@
 
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useStaking } from 'contexts/Staking'
 import { CallToActionWrapper } from 'library/CallToAction'
 import { CallToActionLoader } from 'library/Loader/CallToAction'
 import { useTranslation } from 'react-i18next'
@@ -14,16 +13,15 @@ import { useStatusButtons } from './useStatusButtons'
 
 export const NewMember = ({ syncing }: NewMemberProps) => {
   const { t } = useTranslation()
-  const { inSetup } = useStaking()
   const { setActiveTab } = usePoolsTabs()
   const { openCanvas } = useOverlay().canvas
   const { getJoinDisabled, getCreateDisabled } = useStatusButtons()
 
   // Alias for create button disabled state
-  const createDisabled = getCreateDisabled() || !inSetup()
+  const createDisabled = getCreateDisabled()
 
   // Disable opening the canvas if data is not ready.
-  const joinButtonDisabled = getJoinDisabled() || !inSetup()
+  const joinButtonDisabled = getJoinDisabled()
 
   return (
     <CallToActionWrapper>

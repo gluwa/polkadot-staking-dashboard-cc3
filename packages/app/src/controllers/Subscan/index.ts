@@ -1,6 +1,7 @@
 // Copyright 2024 @polkadot-cloud/polkadot-staking-dashboard authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
+import { NetworkList } from 'consts/networks'
 import type { Locale } from 'date-fns'
 import { format, fromUnixTime, getUnixTime, subDays } from 'date-fns'
 import { poolMembersPerPage } from 'library/List/defaults'
@@ -30,6 +31,16 @@ export class Subscan {
 
   // Maximum amount of payout days supported.
   static MAX_PAYOUT_DAYS = 60
+
+  // Request queue and rate limiting
+  private static requestQueue: Array<() => Promise<unknown>> = []
+  private static isProcessingQueue = false
+  private static lastRequestTime = 0
+
+  // Type guard for API responses
+  private static hasListProperty(result: unknown): result is { list: unknown } {
+    return typeof result === 'object' && result !== null && 'list' in result
+  }
 
   // The network to use for Subscan API calls.
   static network: string
@@ -97,14 +108,18 @@ export class Subscan {
         page: 0,
       })
 
+      if (!result || !this.hasListProperty(result) || !result.list) {
+        return { payouts: [], unclaimedPayouts: [] }
+      }
+
+      const resultList = result.list as SubscanPayout[]
       const payouts =
-        result?.list?.filter(
+        resultList.filter(
           ({ block_timestamp }: SubscanPayout) => block_timestamp !== 0
         ) || []
 
       let unclaimedPayouts =
-        result?.list?.filter((l: SubscanPayout) => l.block_timestamp === 0) ||
-        []
+        resultList.filter((l: SubscanPayout) => l.block_timestamp === 0) || []
 
       // Further filter unclaimed payouts to ensure that payout records of `stash` and
       // `validator_stash` are not repeated for an era. NOTE: This was introduced to remove errornous
@@ -122,7 +137,7 @@ export class Subscan {
 
       return { payouts, unclaimedPayouts }
     } catch (e) {
-      // Silently fail request and return empty records.
+      console.warn('Failed to fetch nominator payouts:', e)
       return { payouts: [], unclaimedPayouts: [] }
     }
   }
@@ -137,16 +152,19 @@ export class Subscan {
         row: 100,
         page: 0,
       })
-      if (!result?.list) {
+
+      if (!result || !this.hasListProperty(result) || !result.list) {
         return []
       }
-      // Remove claims with a `block_timestamp`.
-      const poolClaims = result.list.filter(
+
+      // Remove claims with a `block_timestamp` of 0.
+      const resultList = result.list as SubscanPoolClaim[]
+      const poolClaims = resultList.filter(
         (l: SubscanPoolClaim) => l.block_timestamp !== 0
       )
       return poolClaims
     } catch (e) {
-      // Silently fail request and return empty record.
+      console.warn('Failed to fetch pool claims:', e)
       return []
     }
   }
@@ -156,22 +174,30 @@ export class Subscan {
     poolId: number,
     page: number
   ): Promise<PoolMember[]> => {
-    const result = await this.makeRequest(this.ENDPOINTS.poolMembers, {
-      pool_id: poolId,
-      row: poolMembersPerPage,
-      page: page - 1,
-    })
-    if (!result?.list) {
+    try {
+      const result = await this.makeRequest(this.ENDPOINTS.poolMembers, {
+        pool_id: poolId,
+        row: poolMembersPerPage,
+        page: page - 1,
+      })
+
+      if (!result || !this.hasListProperty(result) || !result.list) {
+        return []
+      }
+
+      // Format list and return.
+      const resultList = result.list as SubscanPoolMember[]
+      return resultList
+        .map((entry: SubscanPoolMember) => ({
+          who: entry.account_display.address,
+          poolId: entry.pool_id,
+        }))
+        .reverse()
+        .splice(0, resultList.length - 1)
+    } catch (e) {
+      console.warn('Failed to fetch pool members:', e)
       return []
     }
-    // Format list and return.
-    return result.list
-      .map((entry: SubscanPoolMember) => ({
-        who: entry.account_display.address,
-        poolId: entry.pool_id,
-      }))
-      .reverse()
-      .splice(0, result.list.length - 1)
   }
 
   // Fetch a pool's era points from Subscan.
@@ -179,28 +205,38 @@ export class Subscan {
     address: string,
     era: number
   ): Promise<SubscanEraPoints[]> => {
-    const result = await this.makeRequest(this.ENDPOINTS.eraStat, {
-      page: 0,
-      row: 100,
-      address,
-    })
-    if (!result || !result.list) {
+    try {
+      const result = await this.makeRequest(this.ENDPOINTS.eraStat, {
+        page: 0,
+        row: 100,
+        address,
+      })
+
+      if (!result || !this.hasListProperty(result) || !result.list) {
+        return []
+      }
+
+      // Format list to just contain reward points.
+      const resultList = result.list as Array<{
+        era: number
+        reward_point: number
+      }>
+      const list = []
+      for (let i = era; i > era - 100; i--) {
+        list.push({
+          era: i,
+          reward_point:
+            resultList.find(
+              ({ era: resultEra }: { era: number }) => resultEra === i
+            )?.reward_point ?? 0,
+        })
+      }
+      // Removes last zero item and return.
+      return list.reverse().splice(0, list.length - 1)
+    } catch (e) {
+      console.warn('Failed to fetch era points:', e)
       return []
     }
-
-    // Format list to just contain reward points.
-    const list = []
-    for (let i = era; i > era - 100; i--) {
-      list.push({
-        era: i,
-        reward_point:
-          result.list.find(
-            ({ era: resultEra }: { era: number }) => resultEra === i
-          )?.reward_point ?? 0,
-      })
-    }
-    // Removes last zero item and return.
-    return list.reverse().splice(0, list.length - 1)
   }
 
   // Handle fetching pool members.
@@ -304,21 +340,103 @@ export class Subscan {
   }
 
   // Get the public Subscan endpoint.
-  static getEndpoint = () => `https://${this.network}.api.subscan.io`
+  static getEndpoint = () => {
+    const networkConfig = NetworkList[this.network as keyof typeof NetworkList]
+    return (
+      networkConfig?.endpoints?.subscan?.api ||
+      `https://${this.network}.api.subscan.io`
+    )
+  }
 
-  static getExplorerUrl = () => `https://${this.network}.subscan.io`
+  static getExplorerUrl = () => {
+    const networkConfig = NetworkList[this.network as keyof typeof NetworkList]
+    return (
+      networkConfig?.endpoints?.subscan?.explorer ||
+      `https://${this.network}.subscan.io`
+    )
+  }
+
+  // Process the request queue with rate limiting
+  private static async processQueue() {
+    if (this.isProcessingQueue || this.requestQueue.length === 0) {
+      return
+    }
+
+    this.isProcessingQueue = true
+
+    while (this.requestQueue.length > 0) {
+      const now = Date.now()
+      const timeSinceLastRequest = now - this.lastRequestTime
+      const minInterval = 1000 / this.TOTAL_REQUESTS_PER_SECOND // 200ms between requests
+
+      if (timeSinceLastRequest < minInterval) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, minInterval - timeSinceLastRequest)
+        )
+      }
+
+      const request = this.requestQueue.shift()
+      if (request) {
+        this.lastRequestTime = Date.now()
+        await request()
+      }
+    }
+
+    this.isProcessingQueue = false
+  }
 
   // Make a request to Subscan and return any data returned from the response.
-  static makeRequest = async (endpoint: string, body: SubscanRequestBody) => {
-    const res: Response = await fetch(this.getEndpoint() + endpoint, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.ApiSubscanKey,
-      },
-      body: JSON.stringify(body),
-      method: 'POST',
+  static makeRequest = async (endpoint: string, body: SubscanRequestBody) =>
+    new Promise((resolve, reject) => {
+      const request = async () => {
+        try {
+          const res: Response = await fetch(this.getEndpoint() + endpoint, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': this.ApiSubscanKey,
+            },
+            body: JSON.stringify(body),
+            method: 'POST',
+          })
+
+          if (res.status === 429) {
+            // Rate limited - wait longer and retry once
+            await new Promise((retryResolve) => setTimeout(retryResolve, 2000))
+            const retryRes: Response = await fetch(
+              this.getEndpoint() + endpoint,
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-API-Key': this.ApiSubscanKey,
+                },
+                body: JSON.stringify(body),
+                method: 'POST',
+              }
+            )
+
+            if (retryRes.status === 429) {
+              reject(new Error('Rate limited after retry'))
+              return
+            }
+
+            const retryJson = await retryRes.json()
+            resolve(retryJson?.data || undefined)
+            return
+          }
+
+          if (!res.ok) {
+            reject(new Error(`HTTP ${res.status}: ${res.statusText}`))
+            return
+          }
+
+          const json = await res.json()
+          resolve(json?.data || undefined)
+        } catch (error) {
+          reject(error)
+        }
+      }
+
+      this.requestQueue.push(request)
+      this.processQueue()
     })
-    const json = await res.json()
-    return json?.data || undefined
-  }
 }

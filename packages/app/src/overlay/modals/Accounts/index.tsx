@@ -43,13 +43,20 @@ export const Accounts = () => {
     let isInPool = false
     const delegates = getDelegates(address)
 
-    // Inject transferrable balance into delegates list.
+    // Inject correct available balance into delegates list.
     if (delegates?.delegates) {
-      delegates.delegates = delegates?.delegates.map((d) => ({
-        ...d,
-        transferrableBalance: getTransferOptions(d.delegate)
-          .transferrableBalance,
-      }))
+      delegates.delegates = delegates?.delegates.map((d) => {
+        const delegateTransferOptions = getTransferOptions(d.delegate)
+        const delegateStakingLedger = getStakingLedger(d.delegate)
+        const delegateTotal = delegateStakingLedger?.ledger?.total || 0n
+        const delegateAvailableAmount =
+          delegateTransferOptions.freeBalance - delegateTotal
+
+        return {
+          ...d,
+          transferrableBalance: delegateAvailableAmount,
+        }
+      })
     }
 
     // Check if nominating
@@ -148,24 +155,29 @@ export const Accounts = () => {
             <ActionItem
               text={t('nominatingAnd', { ns: 'pages' }) + ' ' + t('inPool')}
             />
-            {nominatingAndPool.map(({ address, source, delegates }, i) => (
-              <Fragment key={`acc_nominating_and_pool_${i}`}>
-                <AccountButton
-                  transferrableBalance={
-                    getTransferOptions(address).transferrableBalance
-                  }
-                  address={address}
-                  source={source}
-                />
-                {address && (
-                  <Delegates
-                    delegator={address}
+            {nominatingAndPool.map(({ address, source, delegates }, i) => {
+              const transferOptions = getTransferOptions(address)
+              const stakingLedger = getStakingLedger(address)
+              const total = stakingLedger?.ledger?.total || 0n
+              const availableAmount = transferOptions.freeBalance - total
+
+              return (
+                <Fragment key={`acc_nominating_and_pool_${i}`}>
+                  <AccountButton
+                    transferrableBalance={availableAmount}
+                    address={address}
                     source={source}
-                    delegates={delegates}
                   />
-                )}
-              </Fragment>
-            ))}
+                  {address && (
+                    <Delegates
+                      delegator={address}
+                      source={source}
+                      delegates={delegates}
+                    />
+                  )}
+                </Fragment>
+              )
+            })}
           </>
         ) : null}
 
@@ -173,24 +185,29 @@ export const Accounts = () => {
           <>
             <AccountSeparator />
             <ActionItem text={t('nominating')} />
-            {nominating.map(({ address, source, delegates }, i) => (
-              <Fragment key={`acc_nominating_${i}`}>
-                <AccountButton
-                  transferrableBalance={
-                    getTransferOptions(address).transferrableBalance
-                  }
-                  address={address}
-                  source={source}
-                />
-                {address && (
-                  <Delegates
-                    delegator={address}
+            {nominating.map(({ address, source, delegates }, i) => {
+              const transferOptions = getTransferOptions(address)
+              const stakingLedger = getStakingLedger(address)
+              const total = stakingLedger?.ledger?.total || 0n
+              const availableAmount = transferOptions.freeBalance - total
+
+              return (
+                <Fragment key={`acc_nominating_${i}`}>
+                  <AccountButton
+                    transferrableBalance={availableAmount}
+                    address={address}
                     source={source}
-                    delegates={delegates}
                   />
-                )}
-              </Fragment>
-            ))}
+                  {address && (
+                    <Delegates
+                      delegator={address}
+                      source={source}
+                      delegates={delegates}
+                    />
+                  )}
+                </Fragment>
+              )
+            })}
           </>
         ) : null}
 
@@ -198,24 +215,29 @@ export const Accounts = () => {
           <>
             <AccountSeparator />
             <ActionItem text={t('inPool')} />
-            {inPool.map(({ address, source, delegates }, i) => (
-              <Fragment key={`acc_in_pool_${i}`}>
-                <AccountButton
-                  transferrableBalance={
-                    getTransferOptions(address).transferrableBalance
-                  }
-                  address={address}
-                  source={source}
-                />
-                {address && (
-                  <Delegates
-                    delegator={address}
+            {inPool.map(({ address, source, delegates }, i) => {
+              const transferOptions = getTransferOptions(address)
+              const stakingLedger = getStakingLedger(address)
+              const total = stakingLedger?.ledger?.total || 0n
+              const availableAmount = transferOptions.freeBalance - total
+
+              return (
+                <Fragment key={`acc_in_pool_${i}`}>
+                  <AccountButton
+                    transferrableBalance={availableAmount}
+                    address={address}
                     source={source}
-                    delegates={delegates}
                   />
-                )}
-              </Fragment>
-            ))}
+                  {address && (
+                    <Delegates
+                      delegator={address}
+                      source={source}
+                      delegates={delegates}
+                    />
+                  )}
+                </Fragment>
+              )
+            })}
           </>
         ) : null}
 
@@ -223,24 +245,29 @@ export const Accounts = () => {
           <>
             <AccountSeparator />
             <ActionItem text={t('notStaking')} />
-            {notStaking.map(({ address, source, delegates }, i) => (
-              <Fragment key={`acc_not_staking_${i}`}>
-                <AccountButton
-                  transferrableBalance={
-                    getTransferOptions(address).transferrableBalance
-                  }
-                  address={address}
-                  source={source}
-                />
-                {address && (
-                  <Delegates
-                    delegator={address}
+            {notStaking.map(({ address, source, delegates }, i) => {
+              const transferOptions = getTransferOptions(address)
+              const stakingLedger = getStakingLedger(address)
+              const total = stakingLedger?.ledger?.total || 0n
+              const availableAmount = transferOptions.freeBalance - total
+
+              return (
+                <Fragment key={`acc_not_staking_${i}`}>
+                  <AccountButton
+                    transferrableBalance={availableAmount}
+                    address={address}
                     source={source}
-                    delegates={delegates}
                   />
-                )}
-              </Fragment>
-            ))}
+                  {address && (
+                    <Delegates
+                      delegator={address}
+                      source={source}
+                      delegates={delegates}
+                    />
+                  )}
+                </Fragment>
+              )
+            })}
           </>
         ) : null}
       </Padding>

@@ -7,7 +7,7 @@ import type { FunctionComponent, SVGProps } from 'react'
 
 export type ChainId = NetworkId
 
-export type NetworkId = 'creditcoin3-dev'
+export type NetworkId = 'creditcoin3-dev' | 'creditcoin3-testnet' | 'creditcoin3-dryrun'
 
 export type ProviderType = 'ws' | 'sc'
 
@@ -91,9 +91,11 @@ export interface NetworkConfig {
 export interface Network {
   name: NetworkId
   endpoints: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lightClient: () => Promise<any>
     rpc: Record<string, string>
+    subscan?: {
+      api: string
+      explorer: string
+    }
   }
   unit: string
   units: number

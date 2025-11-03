@@ -13,18 +13,17 @@ export const getIdentityDisplay = (
   let display = ''
 
   // Add base-identity to display
-  const baseValue = _identity?.info?.display?.value
+  const baseValue = _identity?.[0]?.info?.display?.value
   if (baseValue) {
     display = baseValue
   }
   // Overwrite with super identity value if it exists
-  const superIdentityValue =
-    _superIdentity?.superOf?.identity?.info?.display?.value
+  const superIdentityValue = _superIdentity?.identity?.[0]?.info?.display?.value
   if (superIdentityValue) {
     display = superIdentityValue
   }
   // Add super value as secondary identity value
-  const superValue = _superIdentity?.value || ''
+  const superValue = _superIdentity?.value?.value || ''
 
   return display === ''
     ? {

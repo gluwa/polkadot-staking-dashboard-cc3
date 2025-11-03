@@ -11,7 +11,7 @@ export const GitHubURl =
 
 // Element Thresholds
 export const SideMenuHiddenWidth = 195
-export const SideMenuMaximisedWidth = 145
+export const SideMenuMaximisedWidth = 180
 export const SideMenuMinimisedWidth = 75
 export const SectionFullWidthThreshold = 1000
 export const PageWidthMediumThreshold = 1150

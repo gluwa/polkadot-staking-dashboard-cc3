@@ -241,7 +241,7 @@
       "payout": [
         "Payout",
         [
-          "Payouts are staking rewards on {NETWORK_NAME}. They depend on how many 'Era Points' your nominated validators accrue over time. Rewards are determined at the end of every Era (24 hour periods).",
+          "Payouts are staking rewards on {NETWORK_NAME}. They depend on how many 'Era Points' your nominated validators accrue over time. Rewards are determined at the end of every Era (24 hour periods). 'Pending Payouts' shows the accumulated rewards for the last 7 Eras.",
           "To receive staking rewards, a Payout needs to be requested. Any nominator backing the validator in question can request a Payout.",
           "One payout request triggers the reward payout for every nominator."
         ]

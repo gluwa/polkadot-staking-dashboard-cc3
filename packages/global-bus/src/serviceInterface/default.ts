@@ -23,6 +23,11 @@ export const defaultServiceInterface: CreditcoinServiceInterface = {
     erasValidatorPrefs: async () => undefined,
     erasRewardPointsMulti: async () => [],
     ledgerMulti: async () => [],
+    claimedRewardsMulti: async () => [],
+    identityOf: async () => null,
+    identityOfMulti: async () => [],
+    superOf: async () => undefined,
+    superOfMulti: async () => [],
   },
   runtimeApi: {
     balanceToPoints: async () => BigInt(0),

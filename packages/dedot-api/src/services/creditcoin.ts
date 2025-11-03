@@ -261,6 +261,15 @@ export class CreditcoinService
         await query.erasRewardPointsMulti(this.apiRelay, eras),
       ledgerMulti: async (addresses) =>
         await query.ledgerMulti(this.apiRelay, addresses),
+      claimedRewardsMulti: async (eraAddressPairs) =>
+        await query.claimedRewardsMulti(this.apiRelay, eraAddressPairs),
+      identityOf: async (address) =>
+        await query.identityOf(this.apiRelay, address),
+      identityOfMulti: async (addresses) =>
+        await query.identityOfMulti(this.apiRelay, addresses),
+      superOf: async (address) => await query.superOf(this.apiRelay, address),
+      superOfMulti: async (addresses) =>
+        await query.superOfMulti(this.apiRelay, addresses),
     },
     runtimeApi: {
       balanceToPoints: async (poolId, amount) =>

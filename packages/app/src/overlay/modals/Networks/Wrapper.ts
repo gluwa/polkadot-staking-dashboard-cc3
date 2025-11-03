@@ -149,7 +149,7 @@ export const ConnectionsWrapper = styled.div`
   }
 `
 
-export const ConnectionButton = styled.button<{ $connected: boolean }>`
+export const ConnectionButton = styled.button`
   background: var(--button-primary-background);
   border: 1px solid var(--status-success-color-transparent);
   position: relative;
@@ -157,11 +157,6 @@ export const ConnectionButton = styled.button<{ $connected: boolean }>`
   margin-bottom: 1rem;
   margin-right: 0.5rem;
   border-radius: 0.75rem;
-  ${(props) =>
-    props.$connected !== true &&
-    `
-    border: 1px solid rgba(0,0,0,0);
-  `}
   display: inline-flex;
   flex-flow: row wrap;
   align-items: center;
